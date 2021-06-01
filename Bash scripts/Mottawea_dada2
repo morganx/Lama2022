@@ -1,0 +1,62 @@
+library(dada2); packageVersion("dada2")
+# File parsing
+#make files called fwd and rev first
+pathF <- "/SCRATCH2/XCM_STUDENTS/Lama/mott/fwd" 
+#pathR <- "/SCRATCH2/XCM_STUDENTS/Lama/HMP2/16S_HMPrev" 
+filtpathF <- file.path(pathF, "filtered") # Filtered forward files go into the pathF/filtered/ subdirectory
+#filtpathR <- file.path(pathR, "filtered") # ...
+fastqFs <- sort(list.files(pathF, pattern="fastq.gz"))
+#fastqRs <- sort(list.files(pathR, pattern="fastq.gz"))
+sample.names <- sapply(strsplit(fastqFs, ".fastq.gz"), `[`, 1)
+
+#inspect quality before trimming
+#pdf("Plotquality.pdf")
+#plotQualityProfile(pathF[1])
+#plotQualityProfile(pathR[1])
+#dev.off() #Turn off saving as a pdf function
+
+#sample.names<-sub("_L001$", "", sample.names, perl=TRUE)
+#if(length(fastqFs) != length(fastqRs)) stop("Forward and reverse files do not match.")
+# Filtering: THESE PARAMETERS ARENT OPTIMAL FOR ALL DATASE
+out<-filterAndTrim(fwd=file.path(pathF, fastqFs), filt=file.path(filtpathF, fastqFs),
+              truncLen=c(160), maxEE=2, truncQ=11, maxN=0, rm.phix=TRUE,
+              compress=TRUE, verbose=TRUE, multithread=TRUE)
+
+
+library(dada2); packageVersion("dada2")
+# File parsing
+filtpathF <- "/SCRATCH2/XCM_STUDENTS/Lama/mott/fwd/filtered" 
+#filtpathR <- "/SCRATCH2/XCM_STUDENTS/Lama/HMP2/16S_HMPrev/filtered"
+#mykeep <- out[,"reads.out"] > 150 # Or other cutoff
+filtFs <- list.files(filtpathF, pattern="fastq.gz", full.names = TRUE)
+#filtRs <- list.files(filtpathR, pattern="fastq.gz", full.names = TRUE)
+
+sample.names <- sapply(strsplit(filtFs, ".fastq.gz"), `[`, 1)
+sample.names1 <- sapply(strsplit(sample.names, "/"), `[`, 8)
+names(filtFs) <- sample.names1
+#names(filtRs) <- sample.names1
+set.seed(100)
+# Learn forward error rates
+errF <- learnErrors(filtFs, nbases=1e8, multithread=TRUE)
+derepFs<-derepFastq(filtFs) 
+names(derepFs)<-sample.names1
+dadaFs<-dada(derepFs, err=errF, multithread=TRUE)# Learn reverse error rates
+#errR <- learnErrors(filtRs, nbases=1e8, multithread=TRUE)
+# Construct sequence table and remove chimeras
+seqtab <- makeSequenceTable(dadaFs)
+saveRDS(seqtab, "/SCRATCH2/XCM_STUDENTS/Lama/mott/output/seqtab.rds") 
+library(dada2); packageVersion("dada2")
+# Merge multiple runs (if necessary)
+#st1 <- readRDS("/SCRATCH2/XCM_STUDENTS/Lama/RISK/output/seqtab.rds") 
+#st2 <- readRDS("/SCRATCH/XCM_STUDENTS/output/seqtab.rds")
+st5 <- readRDS("/SCRATCH2/XCM_STUDENTS/Lama/mott/output/seqtab.rds")
+#st.all <- mergeSequenceTables(st1, st2, st3)
+# Remove chimeras
+seqtab <- removeBimeraDenovo(st5, method="consensus", multithread=TRUE)
+# Assign taxonomy
+# Do not change. database lives here
+tax <- assignTaxonomy(seqtab, "/DATABASES/SILVA/silva_v132/silva_nr_v132_train_set.fa.gz", multithread=TRUE)
+# Write to disk
+saveRDS(seqtab, "/SCRATCH2/XCM_STUDENTS/Lama/mott/output/seqtab_final.rds") 
+saveRDS(tax, "/SCRATCH2/XCM_STUDENTS/Lama/mott/output/tax_final.rds")
+
