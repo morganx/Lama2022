@@ -1,0 +1,1091 @@
+---
+title: "masters-deseq"
+output: pdf_document
+---
+
+
+
+
+Deseq2-liu
+```{r}
+
+###Check to see what samples you have and what might need to be removed
+head(sample_data(ps_liu)$dx, 25)
+
+
+###Remove samples we dont need
+ps_liu = subset_samples(ps_liu, !is.na(dx))
+
+##Glom at genus level 
+liu<-ps_liu %>% 
+tax_glom(taxrank = "Genus") 
+
+##Filter so that we select f0r those that are in at least 2.5% of samples and have at least 3 counts in each sample
+filter <- phyloseq::genefilter_sample(liu, filterfun_sample(function(x) x >= 3), 
+A = 0.025*nsamples(liu))
+liu<- prune_taxa(filter, liu)
+
+
+###Start the DESeq2 process
+diagdds = phyloseq_to_deseq2(liu, ~ dx)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) # helps with datasts that have 0 for some OTU. Change rows to have row names as otu
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+
+###CD versus Controls
+res_CD = results(diagdds, contrast = c("dx", "CD", "nonIBD"))
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+alpha = 0.2
+sigtab_CD = res_CD[which(res_CD$padj < alpha), ]
+sigtab_CD= cbind(as(sigtab_CD, "data.frame"), as(tax_table(liu)[rownames(sigtab_CD), ], "matrix"))
+
+sigtab_liu_CD = sigtab_CD[order(sigtab_CD$padj), ]
+```
+
+Deseq2-mott
+```{r}
+
+head(sample_data(ps_mott)$dx, 25)
+
+  
+
+ps_mott = subset_samples(ps_mott, !is.na(dx))
+mott<-ps_mott%>% 
+tax_glom(taxrank = "Genus") 
+
+filter <- phyloseq::genefilter_sample(mott, filterfun_sample(function(x) x >= 3), 
+A = 0.025*nsamples(mott))
+mott<- prune_taxa(filter, mott)
+
+
+
+diagdds = phyloseq_to_deseq2(mott, ~ dx)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) 
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+
+res_CD = results(diagdds, contrast = c("dx", "CD", "nonIBD"))
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+
+alpha = 0.2
+sigtab_CD = res_CD[which(res_CD$padj < alpha), ]
+sigtab_CD= cbind(as(sigtab_CD, "data.frame"), as(tax_table(mott)[rownames(sigtab_CD), ], "matrix"))
+
+sigtab_mott_CD = sigtab_CD[order(sigtab_CD$padj), ]
+
+
+###UC versus Controls
+res_UC = results(diagdds, contrast = c("dx", "UC", "nonIBD"))
+res_UC<-res_UC[!is.na(res_UC$padj), ]
+res_UC<-res_UC[!is.na(res_UC$pvalue),]
+
+
+
+alpha = 0.2
+sigtab_UC = res_UC[which(res_UC$padj < alpha), ]
+sigtab_UC= cbind(as(sigtab_UC, "data.frame"), as(tax_table(mott)[rownames(sigtab_UC), ], "matrix"))
+
+sigtab_mott_UC = sigtab_UC[order(sigtab_UC$padj), ]
+
+```
+
+Deseq2-Braun
+```{r}
+
+head(sample_data(ps_br)$dx, 25)
+
+  
+
+ps_br = subset_samples(ps_br, !is.na(dx) | Sample_Number ==1)
+br<-ps_br %>% 
+tax_glom(taxrank = "Genus") 
+
+filter <- phyloseq::genefilter_sample(br, filterfun_sample(function(x) x >= 3), 
+A = 0.025*nsamples(br))
+br<- prune_taxa(filter, br)
+
+
+#fk=prune_taxa(top10, fk)
+diagdds = phyloseq_to_deseq2(br, ~ dx)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans)
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+
+
+res_CD = results(diagdds, contrast = c("dx", "CD", "nonIBD"))
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+ res_fdr<-fdrtool(res_CD$stat, statistic = "normal", plot =T)
+ res_CD[,"padj"]<-p.adjust(res_fdr$pval, method ="BH") ##FDR correct when necessary 
+
+alpha = 0.2
+sigtab_CD = res_CD[which(res_CD$padj < alpha), ]
+sigtab_CD= cbind(as(sigtab_CD, "data.frame"), as(tax_table(br)[rownames(sigtab_CD), ], "matrix"))
+
+sigtab_br_CD = sigtab_CD[order(sigtab_CD$padj), ]
+```
+
+
+Deseq2-Yamada
+```{r}
+
+head(sample_data(ps_yam)$dx, 25)
+ps_yam = subset_samples(ps_yam, !is.na(dx))
+yam<-ps_yam %>% 
+tax_glom(taxrank = "Genus") 
+
+filter <- phyloseq::genefilter_sample(yam, filterfun_sample(function(x) x >= 3), 
+A = 0.025*nsamples(yam))
+yam <- prune_taxa(filter, yam)
+
+
+diagdds = phyloseq_to_deseq2(yam, ~ dx)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) 
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+
+
+res_UC = results(diagdds, contrast = c("dx", "UC", "nonIBD"))
+res_UC<-res_UC[!is.na(res_UC$padj), ]
+res_UC<-res_UC[!is.na(res_UC$pvalue),]
+res_fdr<-fdrtool(res_UC$stat, statistic = "normal", plot =T)
+res_UC[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+
+alpha = 0.2
+sigtab_UC = res_UC[which(res_UC$padj < alpha), ]
+sigtab_UC= cbind(as(sigtab_UC, "data.frame"), as(tax_table(yam)[rownames(sigtab_UC), ], "matrix"))
+
+sigtab_yam_UC = sigtab_UC[order(sigtab_UC$padj), ]
+
+res_CD = results(diagdds, contrast = c("dx", "CD", "nonIBD"))
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+res_fdr<-fdrtool(res_CD$stat, statistic = "normal", plot =T)
+res_CD[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+alpha = 0.2
+sigtab_CD = res_CD[which(res_CD$padj < alpha), ]
+sigtab_CD= cbind(as(sigtab_CD, "data.frame"), as(tax_table(yam)[rownames(sigtab_CD), ], "matrix"))
+
+sigtab_yam_CD = sigtab_CD[order(sigtab_CD$padj), ]
+```
+
+
+Deseq2-Jan
+```{r}
+s_jan<-subset_samples(ps_jan, Subject %in% jan_new$Subject)
+
+head(sample_data(s_jan)$dx, 25)
+#xcm = subset_samples(ps_fk, dx != " ")
+
+
+
+jan<-s_jan %>%
+tax_glom(taxrank = "Genus")
+
+
+filter <- phyloseq::genefilter_sample(jan, filterfun_sample(function(x) x >= 3),
+A = 0.025*nsamples(jan))
+jan <- prune_taxa(filter, jan)
+
+
+diagdds = phyloseq_to_deseq2(jan, ~ dx)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) 
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+
+res_UC= results(diagdds, contrast = c("dx", "UC", "nonIBD"))
+res_UC<-res_UC[!is.na(res_UC$padj), ]
+res_UC<-res_UC[!is.na(res_UC$pvalue),]
+res_fdr<-fdrtool(res_UC$stat, statistic = "normal", plot =T)
+res_UC[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+alpha = 0.2
+sigtab_UC = res_UC[which(res_UC$padj < alpha), ]
+sigtab_UC = cbind(as(sigtab_UC, "data.frame"), as(tax_table(jan)[rownames(sigtab_UC), ], "matrix"))
+
+sigtab_jan_UC = sigtab_UC[order(sigtab_UC$padj), ]
+
+res_CD= results(diagdds, contrast = c("dx", "CD", "nonIBD"))
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+res_fdr<-fdrtool(res_CD$stat, statistic = "normal", plot =T)
+res_CD[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+alpha = 0.2
+sigtab_CD = res_CD[which(res_CD$padj < alpha), ]
+sigtab_CD = cbind(as(sigtab_CD, "data.frame"), as(tax_table(jan)[rownames(sigtab_CD), ], "matrix"))
+
+sigtab_jan_CD = sigtab_CD[order(sigtab_CD$padj), ]
+
+
+```
+
+
+Deseq2-RISK
+```{r}
+
+head(sample_data(ps_risk)$dx, 25)
+
+
+risk = subset_samples(ps_risk,!dx %in% "")
+
+#####PRUNE SAMPLES WITH READS >0 SO THAT NORMALISATION PROCESS AND STATISTICS CAN RUN. oNE SAMPLE WAS REMOVED "SRR1213840"
+risk<-prune_samples(sample_sums(risk)>0, risk)
+
+
+risk<-risk %>% 
+tax_glom(taxrank = "Genus")
+
+head(sample_data(risk)$dx, 25)
+
+ filter <- phyloseq::genefilter_sample(risk, filterfun_sample(function(x) x >= 3),
+ A = 0.025*nsamples(risk))
+ risk <- prune_taxa(filter, risk)
+
+
+diagdds = phyloseq_to_deseq2(risk, ~ dx)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) 
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+
+
+res_UC = results(diagdds, contrast = c("dx", "UC", "nonIBD"))
+res_UC<-res_UC[!is.na(res_UC$padj), ]
+res_UC<-res_UC[!is.na(res_UC$pvalue),]
+res_fdr<-fdrtool(res_UC$stat, statistic = "normal", plot =T)
+res_UC[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+alpha = 0.2
+sigtab_UC= res_UC[which(res_UC$padj < alpha), ]
+sigtab_UC = cbind(as(sigtab_UC, "data.frame"), as(tax_table(risk)[rownames(sigtab_UC), ], "matrix"))
+
+sigtab_risk_UC_biop = sigtab_UC[order(sigtab_UC$padj), ]
+
+res_CD = results(diagdds, contrast = c("dx", "CD", "nonIBD"))
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+res_fdr<-fdrtool(res_CD$stat, statistic = "normal", plot =T)
+res_CD[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+
+alpha = 0.2
+sigtab_CD= res_CD[which(res_CD$padj < alpha), ]
+sigtab_CD = cbind(as(sigtab_CD, "data.frame"), as(tax_table(risk)[rownames(sigtab_CD), ], "matrix"))
+
+sigtab_risk_CD_biop= sigtab_CD[order(sigtab_CD$padj), ]
+
+
+
+```
+
+
+
+Deseq2-RISK Stool
+```{r}
+
+head(sample_data(ps_risk_stool)$diagnosis, 25)
+
+
+risk_stool = subset_samples(ps_risk_stool,!diagnosis %in% c("", "IC"))
+risk_stool<-risk_stool %>% 
+tax_glom(taxrank = "Genus")
+
+
+
+filter <- phyloseq::genefilter_sample(risk_stool, filterfun_sample(function(x) x >= 3),
+A = 0.025*nsamples(risk_stool)) 
+risk_stool<- prune_taxa(filter, risk_stool)
+
+
+diagdds = phyloseq_to_deseq2(risk_stool, ~ diagnosis)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) 
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+
+
+res_UC = results(diagdds, contrast = c("diagnosis", "UC", "nonIBD"))
+res_UC<-res_UC[!is.na(res_UC$padj), ]
+res_UC<-res_UC[!is.na(res_UC$pvalue),]
+res_fdr<-fdrtool(res_UC$stat, statistic = "normal", plot =T)
+res_UC[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+#res = res[order(res$padj, na.last=NA), ]
+alpha = 0.2
+sigtab_UC= res_UC[which(res_UC$padj < alpha), ]
+sigtab_UC = cbind(as(sigtab_UC, "data.frame"), as(tax_table(risk_stool)[rownames(sigtab_UC), ], "matrix"))
+
+sigtab_risk_stool_UC = sigtab_UC[order(sigtab_UC$padj), ]
+
+res_CD = results(diagdds, contrast = c("diagnosis", "CD", "nonIBD"))
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+res_fdr<-fdrtool(res_CD$stat, statistic = "normal", plot =T)
+res_CD[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+
+alpha = 0.2
+sigtab_CD= res_CD[which(res_CD$padj < alpha), ]
+sigtab_CD = cbind(as(sigtab_CD, "data.frame"), as(tax_table(risk_stool)[rownames(sigtab_CD), ], "matrix"))
+
+sigtab_risk_stool_CD = sigtab_CD[order(sigtab_CD$padj), ]
+
+
+
+```
+
+
+Deseq2-FORBES
+```{r}
+
+x<-rbind(forb_CH, forb_UH)
+ps_forbes<-subset_samples(ps_forbes, Subject %in% x$Subject)
+head(sample_data(ps_forbes)$dx, 25)
+
+
+
+forbes = subset_samples(ps_forbes, !dx %in% c("RA", "MS", "NA"))
+forbes<- subset_samples(forbes, !is.na(dx))
+
+
+forbes1<-forbes %>% 
+tax_glom(taxrank = "Genus")
+
+
+
+filter <- phyloseq::genefilter_sample(forbes1, filterfun_sample(function(x) x >= 3), #select genera that have at least 3 counts in samples 
+A = 0.025*nsamples(forbes1))# select genera that are in at least 2.5% of samples
+forbes<- prune_taxa(filter, forbes1)
+
+diagdds = phyloseq_to_deseq2(forbes, ~ dx)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) 
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+
+
+res_UC = results(diagdds, contrast = c("dx", "UC", "nonIBD"))
+res_UC<-res_UC[!is.na(res_UC$padj), ]
+res_UC<-res_UC[!is.na(res_UC$pvalue),]
+res_fdr<-fdrtool(res_UC$stat, statistic = "normal", plot =T)
+res_UC[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+alpha = 0.2
+sigtab_UC = res_UC[which(res_UC$padj < alpha), ]
+sigtab_UC = cbind(as(sigtab_UC, "data.frame"), as(tax_table(forbes)[rownames(sigtab_UC), ], "matrix"))
+
+sigtab_forb_UC = sigtab_UC[order(sigtab_UC$padj), ]
+
+res_CD = results(diagdds, contrast = c("dx", "CD", "nonIBD"))
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+
+#res = res[order(res$padj, na.last=NA), ]
+alpha = 0.2
+sigtab_CD = res_CD[which(res_CD$padj < alpha), ]
+sigtab_CD = cbind(as(sigtab_CD, "data.frame"), as(tax_table(forbes)[rownames(sigtab_CD), ], "matrix"))
+
+sigtab_forb_CD = sigtab_CD[order(sigtab_CD$padj), ]
+
+
+```
+
+
+
+Deseq2-HMP
+```{r}
+new_df_hmp<-alpha_hmp_met[,c("Observed", "dx", "Subject", "host_subject_ID", "Isolation_source")]
+
+###controlling for pseudoreplication in this longitudinal study by selecting the first sample rrfom each patient and control. For a better comparison, samples were selected from the same biological site (rectum or ileum) and comapred
+
+hmp_UH<-new_df_hmp%>%
+  group_by(host_subject_ID) %>% 
+  filter(dx %in%c("UC", "nonIBD")) %>% 
+  filter(Isolation_source== "Rectum") %>% 
+  filter(row_number()==1) %>% 
+  mutate(Study="Lloyd-Price et al.")
+hmp_CH<-new_df_hmp%>%
+  group_by(host_subject_ID) %>% 
+  filter(dx %in% c("CD","nonIBD")) %>%       #Pseudo-replication prevention
+  filter(Isolation_source == "Ileum") %>% 
+  filter(row_number()==1) %>% 
+  mutate(Study="Lloyd-Price et al.")
+
+
+x<-rbind(hmp_UH, hmp_CH)
+
+ps_hmp_CH<-subset_samples(ps_hmp, Subject %in% hmp_CH$Subject)
+head(sample_data(ps_hmp_CH)$dx, 25)
+
+
+ps_hmp_UH<-subset_samples(ps_hmp, Subject %in% hmp_UH$Subject)
+head(sample_data(ps_hmp_UH)$dx, 25)
+
+hmp1_UH<-ps_hmp_UH %>% 
+tax_glom(taxrank = "Genus") 
+
+hmp1_CH<-ps_hmp_CH %>% 
+tax_glom(taxrank = "Genus") 
+
+
+filter <- phyloseq::genefilter_sample(hmp1_UH, filterfun_sample(function(x) x >= 3), 
+A = 0.025*nsamples(hmp1_UH))
+hmp <- prune_taxa(filter, hmp1_UH)
+
+diagdds = phyloseq_to_deseq2(hmp, ~ dx)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) # helps with dtaasts that hav 0 for some OTU
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+
+res_UC = results(diagdds, contrast=c("dx", "UC", "nonIBD"))
+
+
+
+res_UC<-res_UC[!is.na(res_UC$padj), ]
+res_UC<-res_UC[!is.na(res_UC$pvalue),]
+res_fdr<-fdrtool(res_UC$stat, statistic = "normal", plot =T)
+res_UC[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+alpha = 0.2
+sigtab_UC = res_UC[which(res_UC$padj < alpha), ]
+sigtab_UC = cbind(as(sigtab_UC, "data.frame"), as(tax_table(hmp)[rownames(sigtab_UC), ], "matrix"))
+
+sigtab_hmp_UC = sigtab_UC[order(sigtab_UC$padj), ]
+
+###################################################################
+
+filter <- phyloseq::genefilter_sample(hmp1_CH, filterfun_sample(function(x) x >= 3), 
+A = 0.025*nsamples(hmp1_CH))
+hmp <- prune_taxa(filter, hmp1_CH)
+diagdds = phyloseq_to_deseq2(hmp, ~ dx)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) 
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+
+res_CD = results(diagdds, contrast=c("dx", "CD", "nonIBD"))
+
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+res_fdr<-fdrtool(res_CD$stat, statistic = "normal", plot =T)
+res_CD[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+
+alpha = 0.2
+plotMA(res_CD, alpha = 0.05)
+sigtab_CD = res_CD[which(res_CD$padj < alpha), ]
+sigtab_CD = cbind(as(sigtab_CD, "data.frame"), as(tax_table(hmp)[rownames(sigtab_CD), ], "matrix"))
+
+sigtab_hmp_CD = sigtab_CD[order(sigtab_CD$padj), ]
+```
+
+Deseq2-
+```{r}
+
+head(sample_data(ps_xcm)$dx, 25)
+
+xcm = subset_samples(ps_xcm, dx != " ")
+xcm<-xcm %>% 
+tax_glom(taxrank = "Genus")
+
+filter <- phyloseq::genefilter_sample(xcm, filterfun_sample(function(x) x >= 3),
+A = 0.025*nsamples(xcm))
+xcm <- prune_taxa(filter, xcm)
+
+
+diagdds = phyloseq_to_deseq2(xcm, ~ dx)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) 
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+
+res_CD = results(diagdds, contrast = c("dx", "CD", "nonIBD"))
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+res_fdr<-fdrtool(res_CD$stat, statistic = "normal", plot =T)
+res_CD[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+
+
+
+res_UC = results(diagdds, contrast=c("dx", "UC", "nonIBD"))
+hist(res_UC$pvalue)
+res_UC<-res_UC[!is.na(res_UC$padj), ]
+res_UC<-res_UC[!is.na(res_UC$pvalue),]
+res_fdr<-fdrtool(res_UC$stat, statistic = "normal", plot =T)
+res_UC[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+#res = res[order(res$padj, na.last=NA), ]
+alpha = 0.2
+sigtab_CD = res_CD[which(res_CD$padj < alpha), ]
+sigtab_CD = cbind(as(sigtab_CD, "data.frame"), as(tax_table(xcm)[rownames(sigtab_CD), ], "matrix"))
+
+
+sigtab_UC = res_UC[which(res_UC$padj < alpha), ]
+sigtab_UC = cbind(as(sigtab_UC, "data.frame"), as(tax_table(xcm)[rownames(sigtab_UC), ], "matrix"))
+
+sigtab_xcm_CD = sigtab_CD[order(sigtab_CD$padj), ]
+
+sigtab_xcm_UC= sigtab_UC[order(sigtab_UC$padj), ]
+```
+
+Deseq2-
+```{r}
+
+head(sample_data(ps_xcm)$dx, 25)
+
+xcm = subset_samples(ps_xcm, dx != " ")
+xcm<-xcm %>% 
+tax_glom(taxrank = "Genus")
+
+filter <- phyloseq::genefilter_sample(xcm, filterfun_sample(function(x) x >= 3),
+A = 0.025*nsamples(xcm))
+xcm <- prune_taxa(filter, xcm)
+
+
+xcm_stool= subset_samples(xcm, stool== "1")
+xcm_biopsy= subset_samples(xcm, stool== "0")
+
+diagdds = phyloseq_to_deseq2(xcm_stool, ~ dx)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) # helps with dtaasts that hav 0 for some OTU
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+#dc<-"estimateSizeFactors"(diagdds, type = c( "poscounts"), locfunc = stats::median)
+
+#head(counts(ddc, normalized=TRUE))
+
+
+#diagdds = DESeq(diagdds, test="Wald", fitType="parametric")
+
+res_CD = results(diagdds, contrast = c("dx", "CD", "nonIBD"))
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+res_fdr<-fdrtool(res_CD$stat, statistic = "normal", plot =T)
+res_CD[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+
+
+
+res_UC = results(diagdds, contrast=c("dx", "UC", "nonIBD"))
+hist(res_UC$pvalue)
+res_UC<-res_UC[!is.na(res_UC$padj), ]
+res_UC<-res_UC[!is.na(res_UC$pvalue),]
+res_fdr<-fdrtool(res_UC$stat, statistic = "normal", plot =T)
+res_UC[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+#res = res[order(res$padj, na.last=NA), ]
+alpha = 0.2
+sigtab_CD = res_CD[which(res_CD$padj < alpha), ]
+sigtab_CD = cbind(as(sigtab_CD, "data.frame"), as(tax_table(xcm_stool)[rownames(sigtab_CD), ], "matrix"))
+
+
+sigtab_UC = res_UC[which(res_UC$padj < alpha), ]
+sigtab_UC = cbind(as(sigtab_UC, "data.frame"), as(tax_table(xcm_stool)[rownames(sigtab_UC), ], "matrix"))
+
+sigtab_xcm_CD_stool = sigtab_CD[order(sigtab_CD$padj), ]
+
+sigtab_xcm_UC_stool= sigtab_UC[order(sigtab_UC$padj), ]
+```
+
+```{r}
+diagdds = phyloseq_to_deseq2(xcm_biopsy, ~ dx)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) # helps with dtaasts that hav 0 for some OTU
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+#dc<-"estimateSizeFactors"(diagdds, type = c( "poscounts"), locfunc = stats::median)
+
+#head(counts(ddc, normalized=TRUE))
+
+
+#diagdds = DESeq(diagdds, test="Wald", fitType="parametric")
+
+res_CD = results(diagdds, contrast = c("dx", "CD", "nonIBD"))
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+res_fdr<-fdrtool(res_CD$stat, statistic = "normal", plot =T)
+res_CD[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+
+
+
+res_UC = results(diagdds, contrast=c("dx", "UC", "nonIBD"))
+hist(res_UC$pvalue)
+res_UC<-res_UC[!is.na(res_UC$padj), ]
+res_UC<-res_UC[!is.na(res_UC$pvalue),]
+res_fdr<-fdrtool(res_UC$stat, statistic = "normal", plot =T)
+res_UC[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+#res = res[order(res$padj, na.last=NA), ]
+alpha = 0.2
+sigtab_CD = res_CD[which(res_CD$padj < alpha), ]
+sigtab_CD = cbind(as(sigtab_CD, "data.frame"), as(tax_table(xcm_biopsy)[rownames(sigtab_CD), ], "matrix"))
+
+
+sigtab_UC = res_UC[which(res_UC$padj < alpha), ]
+sigtab_UC = cbind(as(sigtab_UC, "data.frame"), as(tax_table(xcm_biopsy)[rownames(sigtab_UC), ], "matrix"))
+
+sigtab_xcm_CD_biopsy = sigtab_CD[order(sigtab_CD$padj), ]
+
+sigtab_xcm_UC_biopsy= sigtab_UC[order(sigtab_UC$padj), ]
+```
+
+
+Deseq2-XCM POUCH-no significant p values 
+```{r}
+
+head(sample_data(ps_xcmp)$dx, 25)
+xcmp= subset_samples(ps_xcmp,  dx!="CDL")
+head(sample_data(ps_xcmp)$dx, 50)
+
+xcmp<-prune_samples(sample_sums(xcmp)>0,xcmp)
+#SRR1908909_1
+xcmp= subset_samples(ps_xcmp,  Subject != "SRR1908909")
+xcmp<-xcmp%>% 
+tax_glom(taxrank = "Genus")
+
+
+ filter <- phyloseq::genefilter_sample(xcmp, filterfun_sample(function(x) x >= 3), 
+ A = 0.025*nsamples(xcmp))
+ xcmp <- prune_taxa(filter, xcmp)
+
+
+
+diagdds = phyloseq_to_deseq2(xcmp, ~ dx)
+set.seed(1)
+
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+x<-as.matrix(diagdds@assays@data@listData [["counts"]])
+z<-colSums(x)
+###use z to check if all samples with zero reads were removed
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) # helps with dtaasts that hav 0 for some OTU
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+#dc<-"estimateSizeFactors"(diagdds, type = c( "poscounts"), locfunc = stats::median)
+
+#head(counts(ddc, normalized=TRUE))
+
+
+#diagdds = DESeq(diagdds, test="Wald", fitType="parametric")
+
+res_UC = results(diagdds, contrast=c("dx", "UC", "nonIBD"))
+#hist(res_UC$pvalue)
+res_UC<-res_UC[!is.na(res_UC$padj), ]
+res_UC<-res_UC[!is.na(res_UC$pvalue),]
+res_fdr<-fdrtool(res_UC$stat, statistic = "normal", plot =T)
+res_UC[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+#res = res[order(res$padj, na.last=NA), ]
+alpha = 0.20
+res_uc<-subset(res_UC, !is.na(res_UC$padj))
+sigtab_UC = res_uc[which(res_uc$padj < alpha), ]
+sigtab_UC = cbind(as(sigtab_UC, "data.frame"), as(tax_table(xcmp)[rownames(sigtab_UC), ], "matrix"))
+
+sigtab_xcmp_UC = sigtab_UC[order(sigtab_UC$padj), ]
+
+
+```
+
+XCM-pouch 
+```{r}
+resCTS_sig <- sigtab_xcmp_UC[order(-sigtab_xcmp_UC$log2FoldChange),]
+
+int <- row.names(resCTS_sig)[1:7]
+ASVlabs <- tax_table(xcmp)[int, 6]
+names(ASVlabs) <- int
+ASVlabs <- as.list(ASVlabs)
+
+ASV_labeller <- function(variable,value){
+return(ASVlabs[value])
+}
+
+tcounts <- t(log2((counts(diagdds[int, ], normalized=TRUE, replaced=FALSE)+.5))) %>%
+merge(colData(diagdds), ., by="row.names") %>%
+gather(ASV, log2FC, (ncol(.)-length(int)+1):ncol(.))
+
+tcounts %>% 
+select(Row.names, dx, ASV, log2FC) %>% 
+head %>% 
+knitr::kable()
+
+ggplot(tcounts, aes(dx, log2FC)) + 
+geom_boxplot() + 
+facet_wrap(~ASV, scales = "free_y", labeller = ASV_labeller) +
+labs(x = "Subject", 
+y = "log2FC", 
+title = "Highest log2FoldChange Results") +
+geom_jitter(aes(color= Subject))+
+theme(axis.text.x = element_text(angle = -90))+theme(legend.position = "none")
+
+
+xcm_15_UC<-c("Faecalitalea", "Epulopiscium", "Barnesiella", "Faecalibacterium", "Hungatella", "Staphylococcus", "Rothia", "Acinetobacter", "Enterrococcus", "Megasphaera", "Parvimonas", "Sphingomonas", "Subdoligranulum", "CAG-56", "Parasutterella", "Clostridioides", 	"Lactobacillus", 	"GCA-900066755", "Lachnospiraceae_NK4A136_group", "Dialister", "Prevotella_7", "Prevotella_2",  "Syntrophococcus", "Ruminococcaceae_UCG-014", "Coprococcus_1", 	"Ruminococcaceae_UCG-003", 	"Dielma", "Tyzzerella_4", "Ruminococcus_1", 	"Acidovorax", 	"Ruminococcaceae_UCG-002", 	"Fusobacterium", "Lelliottia", "Pseudomonas")
+xcm_15_UC<-as.data.frame(xcm_15_UC)
+
+```
+Deseq2-Kim
+```{r}
+# Assign DNA sequences to refseq slot and replace with simple names to improve readability
+
+
+
+head(sample_data(ps_kim)$dx, 25)
+
+kim<-ps_kim %>% 
+tax_glom(taxrank = "Genus")
+
+
+
+
+ filter <- phyloseq::genefilter_sample(kim, filterfun_sample(function(x) x >= 3),
+ A = 0.025*nsamples(kim))
+kim <- prune_taxa(filter, kim)
+
+
+kim_stool= subset_samples(kim, Sample_type=="stool")
+head(sample_data(kim_stool)$Sample_type, 25)
+
+
+diagdds = phyloseq_to_deseq2(kim_stool, ~ dx)
+set.seed(1)
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) # helps with datasets that have 0 for some OTU
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+
+
+res_CD = results(diagdds, contrast=c("dx", "CD", "nonIBD"))
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+hist(res_CD$pvalue)
+ res_fdr<-fdrtool(res_CD$stat, statistic = "normal", plot =T)
+ res_CD[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+#res = res_CD[order(res_CD$padj, na.last=NA), ]
+alpha = 0.2
+sigtab_CD = res_CD[which(res_CD$padj < alpha), ] #no padj less than 0.2
+sigtab_CD = cbind(as(sigtab_CD, "data.frame"), as(tax_table(kim_stool)[rownames(sigtab_CD), ], "matrix"))
+
+sigtab_kim_CD_stool= sigtab_CD[order(sigtab_CD$padj), ]
+```
+
+
+
+
+
+
+Deseq2-JACOBs
+```{r}
+head(sample_data(ps_jac)$dx, 25)
+
+filter <- phyloseq::genefilter_sample(ps_jac, filterfun_sample(function(x) x >= 3), 
+A = 0.025*nsamples(ps_jac))
+RJac <- prune_taxa(filter, ps_jac)
+
+jac<-RJac %>% 
+tax_glom(taxrank = "Genus")
+
+
+diagdds = phyloseq_to_deseq2(jac, ~ dx)
+set.seed(1)
+gm_mean = function(x, na.rm=TRUE){
+exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+geoMeans = apply(counts(diagdds), 1, gm_mean)
+diagdds = estimateSizeFactors(diagdds, geoMeans = geoMeans) 
+diagdds = DESeq(diagdds, test= "Wald", fitType="parametric")
+
+res_UC = results(diagdds, contrast=c("dx", "UC", "nonIBD"))
+
+res_UC<-res_UC[!is.na(res_UC$padj), ]
+res_UC<-res_UC[!is.na(res_UC$pvalue),]
+res_fdr<-fdrtool(res_UC$stat, statistic = "normal", plot =T)
+res_UC[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+alpha = 0.2
+sigtab_UC = res_UC[which(res_UC$padj < alpha), ]
+sigtab_UC = cbind(as(sigtab_UC, "data.frame"), as(tax_table(jac)[rownames(sigtab_UC), ], "matrix"))
+
+sigtab_jac_UC = sigtab_UC[order(sigtab_UC$padj), ]
+
+res_CD = results(diagdds, contrast=c("dx", "CD", "nonIBD"))
+res_CD<-res_CD[!is.na(res_CD$padj), ]
+res_CD<-res_CD[!is.na(res_CD$pvalue),]
+res_fdr<-fdrtool(res_CD$stat, statistic = "normal", plot =T)
+res_CD[,"padj"]<-p.adjust(res_fdr$pval, method ="BH")
+
+alpha = 0.2
+sigtab_CD = res_CD[which(res_CD$padj < alpha), ]
+sigtab_CD = cbind(as(sigtab_CD, "data.frame"), as(tax_table(jac)[rownames(sigtab_CD), ], "matrix"))
+
+sigtab_jac_CD = sigtab_CD[order(sigtab_CD$padj), ]
+```
+
+
+Heat map
+```{r}
+
+####Add study labels to each dataset
+#MORGAN
+xcm_CD_log_stool<-sigtab_xcm_CD_stool %>%  
+mutate(Study ="Morgan et al. 2012")
+
+xcm_CD_log_biopsy<-sigtab_xcm_CD_biopsy %>%  
+mutate(Study ="Morgan et al. 2012 biopsy")
+
+xcm_UC_log_stool<-sigtab_xcm_UC_stool%>% 
+mutate(Study ="Morgan et al. 2012")
+
+xcm_UC_log_biopsy<-sigtab_xcm_UC_biopsy%>%  
+mutate(Study ="Morgan et al. 2012 biopsy")
+
+#JACOBS
+jac_UC_log<-sigtab_jac_UC %>% 
+mutate(Study ="Jacobs et al.")
+jac_CD_log<-sigtab_jac_CD %>% 
+mutate(Study ="Jacobs et al.")
+
+#YAMADA
+yam_UC_log<-sigtab_yam_UC %>% 
+mutate(Study ="Yamada et al.")
+yam_CD_log<-sigtab_yam_CD %>% 
+mutate(Study ="Yamada et al.")
+
+#LLOYD_PRICE
+hmp_UC_log<-sigtab_hmp_UC %>% 
+mutate(Study ="Lloyd-Price et al.")
+hmp_CD_log<-sigtab_hmp_CD %>% 
+mutate(Study ="Lloyd-Price et al.")
+
+#FORBES
+forb_UC_log<-sigtab_forb_UC %>% 
+mutate(Study ="Forbes et al.")
+forb_CD_log<-sigtab_forb_CD %>% 
+mutate(Study ="Forbes et al.")
+
+#GEVERS
+
+risk_UC_log_biopsy<-sigtab_risk_UC_biop %>% 
+ mutate(Study ="Gevers et al.")
+risk_CD_log_biopsy<-sigtab_risk_CD_biop %>% 
+ mutate(Study ="Gevers et al.")
+
+risk_UC_stool_log<-sigtab_risk_stool_UC %>% 
+mutate(Study ="Gevers et al. stool")
+risk_CD_stool_log<-sigtab_risk_stool_CD %>% 
+mutate(Study ="Gevers et al. stool")
+
+#HALFVARSON
+
+jan_UC_log<-sigtab_jan_UC %>% 
+mutate(Study ="Halfvarson et al.")
+jan_CD_log<-sigtab_jan_CD %>% 
+mutate(Study ="Halfvarson et al.")
+
+#KIM
+
+kim_CD_log<-sigtab_kim_CD_stool %>% 
+mutate(Study ="Kim et al.")
+
+#LIU
+liu_CD_log<-sigtab_liu_CD %>% 
+mutate(Study ="Liu et al.")
+
+#MOTTAWEA
+mott_CD_log<-sigtab_mott_CD %>% 
+mutate(Study ="Mottawea et al.")
+mott_UC_log<-sigtab_mott_UC %>% 
+mutate(Study ="Mottawea et al.")
+
+#BRAUN
+br_CD_log<-sigtab_br_CD %>% 
+mutate(Study ="Braun et al.")
+```
+
+
+UC heatmap
+```{r}
+
+##create one dataframe with all dataset results
+UC_prac_adj<-rbind(jan_UC_log, forb_UC_log, jac_UC_log, risk_UC_stool_log, xcm_UC_log_stool, yam_UC_log)
+UC_prac_adj$feature<-"Stool"
+UC_prac_adj_biopsy<-rbind( hmp_UC_log, xcm_UC_log_biopsy, risk_UC_log_biopsy)
+UC_prac_adj_biopsy$feature<-"Biopsy"
+mott_UC_log$feature<-"Lavage"
+
+
+
+UC_prac_adj_all<-rbind(UC_prac_adj, UC_prac_adj_biopsy, mott_UC_log)
+
+UC_prac_adj_all$breaks <- cut(UC_prac_adj_all$log2FoldChange,breaks = c(-31,-5:5, 30),right = FALSE)
+
+UC_prac_adj_all$stars <- cut(UC_prac_adj_all$padj, breaks=c(-Inf, 0.001, 0.01, 0.05, Inf), label=c("***", "**", "*", ""))
+
+UC_prac_adj_all$Phylum<-as.factor(as.character(UC_prac_adj_all$Phylum))
+
+# order the data frame as desired
+UC_prac_adj_all = UC_prac_adj_all[order(UC_prac_adj_all$Phylum, UC_prac_adj_all$Family), ]
+
+
+UC_prac_adj_all<-subset(UC_prac_adj_all,UC_prac_adj_all$padj <= 0.05) ##remove any findings that are insignificant
+
+
+x<-UC_prac_adj_all %>% 
+  select(Genus, Phylum) %>% 
+  distinct()
+
+
+myPalette<-c("#2E8B57", "lightslategray","blue","magenta4"  ,"dark orange","black", "#2E7D32")
+names(myPalette) <- levels(x$Phylum) # Give every color an appropriate name-0
+
+#myPalette<-as.data.frame(myPalette)
+
+
+
+UC_heatmap_adjusted<-UC_prac_adj_all%>% ggplot( aes(y=Genus, x= Study))+geom_tile(aes(fill = as.factor(breaks))) +
+  theme_light()+
+scale_fill_brewer(palette = "PRGn", name = "Log2 Fold Change") + 
+  theme(axis.text.x = element_text(angle = 30,  hjust=1, size=13), axis.title.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(colour=myPalette[x$Phylum], size=13), strip.text = element_text(size = 14), panel.grid.minor.y =element_line(colour="black", size=2))+
+  geom_text(aes(label=stars), color="white", size=4)
+
+
+ UC_heatmap_adjusted_all<- UC_heatmap_adjusted+ aes(y= fct_inorder(Genus))+ aes(y= fct_inorder(Genus))+facet_grid(~factor(feature, levels=c('Biopsy','Lavage','Stool')),
+                                         scales="free_x", space='free')+labs(y= "Genus")
+UC_heatmap_adjusted_all
+```
+
+
+CD 
+```{r}
+UC_prac_adj<-rbind(jan_CD_log, forb_CD_log, jac_CD_log, risk_CD_stool_log, xcm_CD_log_stool, yam_CD_log, br_CD_log)
+UC_prac_adj$feature<-"Stool"
+UC_prac_adj_biopsy<-rbind( hmp_CD_log, xcm_CD_log_biopsy, liu_CD_log, risk_CD_log_biopsy)
+UC_prac_adj_biopsy$feature<-"Biopsy"
+mott_CD_log$feature<-"Lavage"
+CD_prac_adj_all<-rbind(UC_prac_adj, UC_prac_adj_biopsy, mott_CD_log)
+
+
+
+
+CD_prac_adj_all<-rbind(UC_prac_adj, UC_prac_adj_biopsy, mott_CD_log)
+
+
+CD_prac_adj_all$breaks <- cut(CD_prac_adj_all$log2FoldChange,breaks = c(-30,-4:4, 30),right = FALSE)
+
+CD_prac_adj_all$stars <- cut(CD_prac_adj_all$pvalue, breaks=c(-Inf, 0.001, 0.01, 0.05, Inf), label=c("***", "**", "*", ""))
+
+CD_prac_adj_all$Phylum<-as.factor(as.character(CD_prac_adj_all$Phylum))
+
+# order the data frame as desired
+CD_prac_adj_all = CD_prac_adj_all[order(CD_prac_adj_all$Phylum, CD_prac_adj_all$Genus), ]
+
+
+
+
+CD_prac_adj_all[,c("Genus","Phylum")] =CD_prac_adj_all[order(CD_prac_adj_all$Phylum), c("Genus","Phylum")]
+
+x<-CD_prac_adj_all %>% 
+  select(Genus, Phylum) %>% 
+  distinct()
+
+myPalette1<-c("#2E8B57", "lightslategray", "red", "dodgerblue3","magenta4", "dark orange", "black", "#2E7D32")
+names(myPalette1) <- levels(x$Phylum) # Give every color an appropriate name
+
+
+z<-as.data.frame(myPalette1)
+
+
+CD_heatmap_adjusted<-CD_prac_adj_all%>% 
+  ggplot( aes(y=Genus, x= Study))+geom_tile(aes(fill = as.factor(breaks))) +
+  theme_light()+
+scale_fill_brewer(palette = "PRGn", name = "Log2 Fold Change") + 
+  theme(axis.text.x = element_text(angle = 30,  hjust=1, size=13), axis.title.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(colour=myPalette1[x$Phylum], size=13), strip.text = element_text(size = 14), panel.grid.minor.y =element_line(colour="black", size=2))+
+  geom_text(aes(label=stars), color="white", size=4)
+
+CD_heatmap_adjusted_all<- CD_heatmap_adjusted+ aes(y= fct_inorder(Genus))+ aes(y= fct_inorder(Genus))+facet_grid(~factor(feature, levels=c('Biopsy','Lavage','Stool')),
+                                         scales="free_x", space='free')+labs(y= "Genus")
+CD_heatmap_adjusted_all
+```
+
+
+

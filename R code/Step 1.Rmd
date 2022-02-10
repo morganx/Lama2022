@@ -1,0 +1,973 @@
+```{r}
+library(tidyverse)
+library(tidyr)
+library(rstatix)
+library(devtools)
+library(phyloseq)
+library(dada2)
+library(plyr)
+library(dplyr)
+library(microbiome)
+library(vegan)
+library(ggplot2)
+library(gtools)
+library(data.table)
+library(e1071)
+library(ggpubr)
+library(DESeq2)
+library(meta)
+library(fdrtool)
+library(RColorBrewer)
+library("genefilter")
+library(SummarizedExperiment)
+library(hrbrthemes)
+library(forcats)
+library(RColorBrewer)
+library(apeglm)
+library(fastDummies)
+library(hablar)
+library(EnvStats)
+library(effsize)
+library(scales)
+library(patchwork)
+```
+
+```{r}
+
+
+ps_br<-readRDS("~/meta_analysis_IBD/Phyloseq objects/ps_br.RDS")
+ps_risk<-readRDS("~/meta_analysis_IBD/Phyloseq objects/ps_risk.RDS")
+ps_risk_stool<-readRDS( "~/meta_analysis_IBD/Phyloseq objects/ps_risk_stool.RDS")
+ps_xcm<-readRDS("~/meta_analysis_IBD/Phyloseq objects/ps_xcm.RDS")
+ps_xcmp<-readRDS("~/meta_analysis_IBD/Phyloseq objects/ps_xcmp.RDS")
+
+ps_jac<-readRDS("~/meta_analysis_IBD/Phyloseq objects/ps_jac.RDS")
+ps_jan<-readRDS( "~/meta_analysis_IBD/Phyloseq objects/ps_jan.RDS")
+ps_forbes<-readRDS( "~/meta_analysis_IBD/Phyloseq objects/ps_forbes.RDS")
+ps_mott<-readRDS("~/meta_analysis_IBD/Phyloseq objects/ps_mott.RDS")
+ps_kim<-readRDS( "~/meta_analysis_IBD/Phyloseq objects/ps_kim.RDS")
+ps_liu<-readRDS( "~/meta_analysis_IBD/Phyloseq objects/ps_liu.RDS")
+ps_yam<-readRDS("~/meta_analysis_IBD/Phyloseq objects/ps_yam.RDS")
+ps_pro<-readRDS(  "~/meta_analysis_IBD/Phyloseq objects/ps_pro.RDS")
+ps_hmp<-readRDS(  "~/meta_analysis_IBD/Phyloseq objects/ps_hmp.RDS")
+
+
+##Read in rarefied data
+rare_br<-readRDS("~/meta_analysis_IBD/Phyloseq objects/rare_br.RDS")
+rare_risk<-readRDS( "~/meta_analysis_IBD/Phyloseq objects/rare_risk.RDS")
+rare_risk_stool<-readRDS( "~/meta_analysis_IBD/Phyloseq objects/rare_risk_stool.RDS")
+rare_xcm<-readRDS(  "~/meta_analysis_IBD/Phyloseq objects/rare_xcm.RDS")
+rare_xcmp<-readRDS( "~/meta_analysis_IBD/Phyloseq objects/rare_xcmp.RDS")
+rare_jac<-readRDS( "~/meta_analysis_IBD/Phyloseq objects/rare_jac.RDS")
+rare_jan<-readRDS("~/meta_analysis_IBD/Phyloseq objects/rare_jan.RDS")
+rare_forbes<-readRDS(  "~/meta_analysis_IBD/Phyloseq objects/rare_forbes.RDS")
+rare_mott<-readRDS( "~/meta_analysis_IBD/Phyloseq objects/rare_mott.RDS")
+rare_kim<-readRDS( "~/meta_analysis_IBD/Phyloseq objects/rare_kim.RDS")
+rare_liu<-readRDS(  "~/meta_analysis_IBD/Phyloseq objects/rare_liu.RDS")
+rare_yam<-readRDS(  "~/meta_analysis_IBD/Phyloseq objects/rare_yam.RDS")
+rare_pro<-readRDS( '~/meta_analysis_IBD/Phyloseq objects/rare_pro.RDS')
+rare_hmp<-readRDS( '~/meta_analysis_IBD/Phyloseq objects/rare_hmp.RDS')
+
+
+
+```
+
+Alpha Diversity
+```{r}
+#KIM
+
+alpha_kim<- estimate_richness(rare_kim, measures = "Observed")
+Study <-c("Kim et al.")
+alpha_kim_met<- cbind(data.frame(alpha_kim, sample_data(rare_kim)), Study)
+
+#Pouch
+
+alpha_xcmp<- estimate_richness(rare_xcmp, measures = "Observed")
+
+Study = c("Morgan et al. 2015")
+
+alpha_xcmp_met<- cbind(data.frame(alpha_xcmp, sample_data(rare_xcmp)), Study)
+
+
+#forbes
+
+alpha_forb<- estimate_richness(rare_forbes, measures = "Observed")
+
+Study = c("Forbed et al.")
+
+alpha_forb_met<- cbind(data.frame(alpha_forb, sample_data(rare_forbes)), Study)
+#XCM
+
+alpha_xcm<- estimate_richness(rare_xcm, measures = "Observed")
+
+Study<-c("Morgan et al.")
+
+alpha_xcm_met<- cbind(data.frame(alpha_xcm, sample_data(rare_xcm)),Study)
+
+#Liu
+
+alpha_liu<- estimate_richness(rare_liu, measures = "Observed")
+
+
+Study<-c("Liu et al.")
+alpha_liu_met<- cbind(data.frame(alpha_liu, sample_data(rare_liu)), Study)
+
+#Fukui
+# 
+# alpha_fk<- estimate_richness(rare_fk, measures = c("Observed", "Shannon"))
+# 
+# 
+# Study<-c("Fukui")
+# alpha_fk_met<- cbind(data.frame(alpha_fk, sample_data(rare_fk)), Study)
+
+#Braun
+
+alpha_br<- estimate_richness(rare_br, measures = "Observed")
+
+
+Study<-c("Braun et al.")
+alpha_br_met<- cbind(data.frame(alpha_br, sample_data(rare_br)), Study)
+#Jacobs
+
+alpha_jac<- estimate_richness(rare_jac, measures = "Observed")
+
+Study<-c("Jacobs et al.")
+alpha_jac_met<- cbind(data.frame(alpha_jac, sample_data(rare_jac)), Study) 
+
+
+#Jansson 
+alpha_jan<- estimate_richness(rare_jan, measures = "Observed")
+
+Study<-c("Halfvarson et al.")
+alpha_jan_met<- cbind(data.frame(alpha_jan, sample_data(rare_jan)), Study)
+
+#RISK
+
+alpha_risk<- estimate_richness(rare_risk, measures = "Observed")
+Study<-c("Gevers et al. biopsy")
+
+
+alpha_risk_met<- cbind(data.frame(alpha_risk, sample_data(rare_risk)), Study)
+#RISK stool
+
+alpha_risk_stool<- estimate_richness(rare_risk_stool, measures = "Observed")
+Study<-c("Gevers et al. stool")
+alpha_risk_stool_met<- cbind(data.frame(alpha_risk_stool, sample_data(rare_risk_stool)), Study)
+
+#HMP2
+
+alpha_hmp<- estimate_richness(rare_hmp, measures = "Observed")
+Study<-c("Lloyd-Price et al.")
+alpha_hmp_met<- cbind(data.frame(alpha_hmp, sample_data(rare_hmp)), Study)
+
+
+#PROTECT
+
+alpha_pro<-estimate_richness(rare_pro, measures = "Observed")
+Study<-c("Schirmer et al.")
+alpha_pro_met<- cbind(data.frame(alpha_pro, sample_data(rare_pro)), Study)
+
+
+#Yamada
+
+alpha_yam<-estimate_richness(rare_yam, measures = "Observed")
+Study<-c("Yamada et al.")
+alpha_yam_met<- cbind(data.frame(alpha_yam, sample_data(rare_yam)), Study)
+
+#Mott
+
+alpha_mott<-estimate_richness(rare_mott, measures = "Observed")
+Study<-c("Mottawea et al")
+alpha_mott_met<- cbind(data.frame(alpha_mott, sample_data(rare_mott)), Study)
+```
+MAKING A FOREST PLOT
+```{r}
+#Pouch
+
+new_kim<-alpha_kim_met[,c("Observed", "dx", "Subject", "Sample_type", "Study")]
+new_df_xcmp<-alpha_xcmp_met[,c("Observed", "dx", "Subject", "Study")]
+new_df_mott<-alpha_mott_met[,c("Observed", "dx", "Subject", "Study")]
+new_df_br<-alpha_br_met[,c("Observed", "dx", "host_subject_id", "Sample_Number", "host_body_product", "Study")]
+new_df_liu<-alpha_liu_met[,c("Observed", "dx", "Subject", "Study")]
+new_df_forb<-alpha_forb_met[,c("Observed", "dx", "Subject", "host_subject_ID", "timepoint", "Study")]
+#new_df_fk<-alpha_fk_met[,c("Observed", "dx", "Subject", "stool")]
+new_df_xcm<-alpha_xcm_met[,c("Observed", "dx", "Subject", "stool", "Study")]
+new_df_jac<-alpha_jac_met[,c("Observed", "dx", "Subject", "env_material", "Study")]
+new_df_jan<-alpha_jan_met[,c("Observed", "dx", "Subject", "y.body_site", "y.collection_timestamp", "y.host_subject_id", "Study")]
+new_df_hmp<-alpha_hmp_met[,c("Observed", "dx", "Subject", "host_subject_ID", "Isolation_source", "Study")]
+new_df_risk<-alpha_risk_met[,c("Observed", "dx", "Subject", "Study")]
+new_df_risk_stool<-alpha_risk_stool_met[,c("Observed", "diagnosis", "Subject", "Study")]
+new_df_pro<-alpha_pro_met[,c("Observed", "SubjectID", "sampleType", "collectionWeek", "Study")]
+new_df_yam<-alpha_yam_met[,c("Observed", "dx", "Subject", "env_material", "Study")]
+
+forb_new<-new_df_forb%>%
+  filter(dx %in% c("CD","nonIBD", "UC"))
+
+xcm_new<-new_df_xcm%>%
+  filter(dx %in% c("CD","nonIBD", "UC"))
+
+jan_new<-new_df_jan%>%
+  group_by(y.host_subject_id) %>% 
+  arrange(y.collection_timestamp) %>% 
+  filter(row_number()==1) %>%                           #subsetting jansson data to prevent pseudo-replication
+  filter(dx %in% c("CD","nonIBD", "UC"))
+
+jan_new<-as.data.frame(jan_new)
+
+br_new<-new_df_br%>%
+  filter(Sample_Number ==1)                          #subsetting jansson data to prevent pseudo-replication
+br_new<-as.data.frame(br_new)
+
+risk_new<-new_df_risk%>%
+  filter(dx%in% c("CD","nonIBD", "UC"))
+
+shapiro.test(forb_new$Observed)
+shapiro.test(xcm_new$Observed)
+#shapiro.test(new_df_fk$Observed)
+shapiro.test(new_df_jac$Observed)#insignificant
+shapiro.test(new_df_hmp$Observed)
+shapiro.test(risk_new$Observed)
+shapiro.test(new_kim$Observed)
+
+
+```
+
+```{r}
+new_kim_stool<-subset(new_kim, grepl("(stool)", new_kim$Sample_type))
+
+
+xcmp_UH<-new_df_xcmp%>%
+  filter(dx %in% c("UC","nonIBD"))
+
+forb_CH<-new_df_forb%>%
+  group_by(host_subject_ID) %>% 
+  filter(dx %in%c("CD", "nonIBD")) %>% 
+  filter(timepoint == 1)
+
+forb_UH<-new_df_forb%>%
+  group_by(host_subject_ID) %>% 
+  filter(dx %in%c("UC", "nonIBD")) %>% 
+  filter(timepoint == 1)
+
+
+
+
+forb_UH<-as.data.frame(forb_UH)
+forb_CH<-as.data.frame(forb_CH)
+
+
+
+hmp_CH<-new_df_hmp%>%
+  group_by(host_subject_ID) %>% 
+  filter(dx %in% c("CD","nonIBD")) %>%       #Pseudo-replication prevention
+  filter(Isolation_source == "Ileum") %>% 
+  filter(row_number()==1)
+#filter(case_when(dx == "CD" ~ Isolation_source == "Ileum",  T ~ Isolation_source == "Rectum"))
+
+hmp_UH<-new_df_hmp%>%
+  group_by(host_subject_ID) %>% 
+  filter(dx %in%c("UC", "nonIBD")) %>% 
+  filter(Isolation_source== "Rectum") %>% 
+  filter(row_number()==1)
+
+hmp_UH<-as.data.frame(hmp_UH)
+hmp_CH<-as.data.frame(hmp_CH)
+
+
+
+jac_CH<-new_df_jac%>%
+  filter(dx %in% c("CD","nonIBD"))
+
+jac_UH<-new_df_jac%>%
+  filter(dx %in% c("UC","nonIBD"))
+
+xcm_CH<-xcm_new%>%
+  filter(dx %in% c("CD","nonIBD"))
+
+xcm_UH<-xcm_new%>%
+  filter(dx %in% c("UC","nonIBD"))
+
+jan_CH<-jan_new%>%
+  filter(dx %in% c("CD","nonIBD"))
+
+jan_UH<-jan_new%>%
+  filter(dx %in% c("UC","nonIBD"))
+
+new_riskCD<-risk_new%>%
+  filter(dx %in% c("CD", "nonIBD"))
+
+
+new_riskUH<-risk_new%>%
+  filter(dx %in% c("UC", "nonIBD"))
+
+
+
+new_risk_stool_CD<-new_df_risk_stool%>%
+  filter(diagnosis %in% c("CD", "nonIBD"))
+
+
+new_risk_stool_UH<-new_df_risk_stool%>%
+  filter(diagnosis %in% c("UC", "nonIBD"))
+
+
+
+yam_CH<-new_df_yam%>%
+  filter(dx %in% c("CD","nonIBD"))
+
+yam_UH<-new_df_yam%>%
+  filter(dx  %in% c("UC","nonIBD"))
+mott_CH<-new_df_mott%>%
+  filter(dx %in% c("CD","nonIBD"))
+
+mott_UH<-new_df_mott%>%
+  filter(dx  %in% c("UC","nonIBD"))
+```
+
+
+
+```{r}
+
+colnames(new_risk_stool_CD)[2]<-"dx"
+z<-list(new_kim, mott_CH, forb_CH, br_new, new_df_liu, hmp_CH, jac_CH, xcm_CH, jan_CH, new_riskCD, new_risk_stool_CD,yam_CH)
+
+df=NULL
+
+###make contingency tables for each dataset in oen dataframe (samples with lower than n the median observed richness of non-IBD patients)
+
+for (i in z){
+  i$sqr<-i$Observed
+  i$dx = factor(i$dx)
+  x<-i[i$dx == 'nonIBD',]
+  med<-median(x$Observed)
+  w<-table(i$dx, factor(i$sqr < med , levels = c("TRUE", "FALSE")))
+  w<-as.data.frame(w)
+  df<-rbind(df, w)}
+  #print(df)}
+
+bloc_len <- 4 ####give each study a unique ID 
+
+df$bloc <-
+  rep(seq(1, 1 + nrow(df) %/% bloc_len), each = bloc_len, length.out = nrow(df))
+
+
+df$Freq[df$Freq < 1] <- 1###add pseudo count of 1 (an integer) for calculation to work.
+
+df1<-df %>% 
+  spread(Var2, Freq)
+
+
+x<-df1 %>% 
+group_split(Var1) %>%  ##split controls and CD as two different columns 
+  lapply(as.data.frame) 
+
+x<-cbind(x[[1]], x[[2]])
+colnames(x)[7]<-"TRUE1" ##give unique names to control columns of dataframe
+
+
+x$n.e<- x[,3]+x[,4]
+
+x$n.c<- x[,7]+x[,8]
+
+
+x$CD_Study<-c("Kim et al.","Mottawea et al.","Forbes et al.","Braun et al.", "Liu et al.","Lloyd-Price et al.",  "Jacobs et al.", "Morgan et al.","Halfvarsson et al.","Gevers et al. biopsy","Gevers et al. stool", "Yamada et al.")
+
+
+
+xx_CD<-metabin(event.e=x$`TRUE`, n.e = x$n.e, x$TRUE1, n.c = x$n.c, studlab = x$CD_Study, sm="OR", comb.fixed=FALSE)
+xx_CD
+forest(xx_CD, sortvar=TE, leftlabs = c("CD datasets", "Events", "Total", "Events", "Total"))
+
+```
+###UC 
+```{r}
+
+colnames(new_risk_stool_UH)[2]<-"dx"
+z<-list(  new_riskUH, new_risk_stool_UH,hmp_UH, jac_UH, xcm_UH, jan_UH, forb_UH, xcmp_UH, yam_UH, mott_UH)
+
+df=NULL
+
+for (i in z){
+  i$sqr<-i$Observed
+  i$dx = factor(i$dx)
+  x<-i[i$dx == 'nonIBD',]
+  med<-median(x$Observed)
+  i$dx<-factor(i$dx, levels = c( "UC", "nonIBD"))
+  w<-table(i$dx, factor(i$sqr < med , levels = c("TRUE", "FALSE")))
+  w<-as.data.frame(w)
+  df<-rbind(df, w)}
+  #print(df)}
+
+bloc_len <- 4
+
+df$bloc <-
+  rep(seq(1, 1 + nrow(df) %/% bloc_len), each = bloc_len, length.out = nrow(df))
+
+df<-df %>% 
+  spread(Var2, Freq) 
+
+x<-df %>% 
+  group_split(Var1)%>% 
+  lapply(as.data.frame)
+
+x<-cbind(x[[1]], x[[2]])
+
+x$UC_datasets<-c("Gevers et al. biopsy", "Gevers et. al stool",  "Lloyd-Price et al.", "Jacobs et al.","Morgan et al., 2012",  "Halfvarsson et al.", "Forbes et al.",  "Morgan et al., 2015", "Yamada et al.", "Mottawea et al.")
+
+
+
+x$n.e<- x[,3]+x[,4]
+
+x$n.c<- x[,7]+x[,8]
+
+colnames(x)[7]<-"TRUE.1"
+
+
+xx_UC<-metabin(event.e=x$`TRUE`, n.e = x$n.e,event.c =  x$TRUE.1, n.c = x$n.c, studlab = x$UC_datasets, sm="OR", comb.fixed=FALSE) ###remember to make sure of column names 
+xx_UC
+forest(xx_UC, sortvar=TE, leftlabs = c("UC datasets", "Events", "Total", "Events", "Total"))
+
+```
+
+```{r}
+funnel(xx_CD, xlab= "CD odds ratio", studlab=TRUE, cex.studlab = 0.9)
+
+funnel(xx_UC, xlab= "UC odds ratio", studlab=TRUE, cex.studlab = 0.9)
+
+
+```
+
+```{r}
+eggers.test = function(x) {
+
+    # Validate
+    x = x
+
+    if (x$k < 10) {
+
+        warning(paste("Your meta-analysis contains k =",
+                      x$k, "studies. Egger's test may lack the statistical power to detect bias when the number of studies is small (i.e., k<10)."))
+
+    }
+
+    if (class(x)[1] %in% c("meta", "metabin", "metagen", "metacont", "metacor", "metainc", "metaprop")) {
+
+        # Conduct metabias
+        eggers = meta::metabias(x, k.min = 3, method = "linreg")
+
+        # Get Intercept
+        intercept = as.numeric(eggers$estimate[1])
+
+        # Get SE
+        se = as.numeric(eggers$estimate[2])
+
+        # Calculate 95CI
+        llci = intercept - qnorm(0.975) * se
+        ulci = intercept + qnorm(0.975) * se
+
+        # Get t
+        t = as.numeric(eggers$statistic)
+
+        # Get df
+        df = as.numeric(eggers$parameters)
+
+        # Get p
+        p = as.numeric(eggers$p.value)
+
+        # Make df
+        returnlist = list(intercept = intercept,
+                          llci = llci,
+                          ulci = ulci,
+                          t = t,
+                          p = p,
+                          meta.obj = x)
+
+    } else {
+
+        stop("x must be of type 'metabin', 'metagen', 'metacont', 'metainc' or 'metaprop'")
+
+    }
+
+    class(returnlist) = "eggers.test"
+
+    return(returnlist)
+
+}
+eggers.test(x = xx_CD)
+
+eggers.test(x = xx_UC)
+
+```
+####UC biopsy
+```{r}
+
+colnames(new_kim)[4]<-"Sample_type"
+new_kim$Study<-"Kim et al"
+new_kim$Sample_type<-gsub("^.+stool.", "stool", new_kim$Sample_type)
+new_kim$Sample_type<-gsub("^.+tissue.", "biopsy", new_kim$Sample_type)
+kim_both<-new_kim
+
+colnames(xcm_CH)[4]<-"Sample_type"
+xcm_CH$Study<-"Morgan et al 2012"
+colnames(xcm_UH)[4]<-"Sample_type"
+xcm_UH$Study<-"Morgan et al 2012"
+xcm_both<-rbind(xcm_CH, xcm_UH)
+xcm_both$Sample_type<-gsub("1", "stool", xcm_both$Sample_type)
+xcm_both$Sample_type<-gsub("0", "biopsy", xcm_both$Sample_type)
+
+
+
+bio_xcm_UC<-xcm_both %>% 
+  filter(xcm_both$Sample_type == "biopsy") %>% 
+  filter(dx %in% c("UC", "nonIBD"))
+
+bio_xcm_CD<-xcm_both %>% 
+  filter(xcm_both$Sample_type == "biopsy") %>% 
+  filter(dx %in% c("CD", "nonIBD"))
+
+stool_xcm_CD<-xcm_both %>% 
+  filter(xcm_both$Sample_type == "stool")%>% 
+  filter(dx %in% c("CD", "nonIBD"))
+
+stool_xcm_UC<-xcm_both %>% 
+  filter(xcm_both$Sample_type == "stool")%>% 
+  filter(dx %in% c("UC", "nonIBD"))
+
+
+z<- list( new_riskUH, hmp_UH, bio_xcm_UC,  xcmp_UH)
+
+
+
+df=NULL
+
+for (i in z){
+  i$sqr<-i$Observed
+  i$dx = factor(i$dx)
+  x<-i[i$dx == 'nonIBD',]
+  med<-median(x$Observed)
+  i$dx<-factor(i$dx, levels = c( "UC", "nonIBD"))
+  w<-table(i$dx, factor(i$sqr < med , levels = c("TRUE", "FALSE")))
+  w<-as.data.frame(w)
+  df<-rbind(df, w)}
+  #print(df)}
+
+bloc_len <- 4
+
+df$bloc <-
+  rep(seq(1, 1 + nrow(df) %/% bloc_len), each = bloc_len, length.out = nrow(df))
+#df$Var2<-ifelse(df$Var2 =="TRUE" & df$Var1 == "CD", "n.e", "n.c")
+df<-df %>% 
+  spread(Var2, Freq) 
+
+x<-df %>% 
+  group_split(Var1) %>% 
+  lapply(as.data.frame)
+
+x<-cbind(x[[1]], x[[2]])
+
+x$Study<-c("Gevers et al.",  "Lloyd-Price et al.", "Morgan et al., 2012", "Morgan et al., 2015")#, "Tong",
+
+x$n.e<- x[,3]+x[,4]
+
+x$n.c<- x[,7]+x[,8]
+
+x<-x[,c(-4, -8)]
+
+xx_UC_bio<-metabin(event.e=x$`TRUE`, n.e = x$n.e, x$TRUE.1, n.c = x$n.c, studlab = x$Study, sm="OR", comb.fixed=FALSE)
+xx_UC_bio
+ forest(xx_UC_bio, sortvar=TE, leftlabs = c("UC biopsy datasets", "Events", "Total", "Events", "Total"))
+
+
+
+```
+
+
+```{r}
+
+z<- list(new_riskCD, hmp_CH, bio_xcm_CD, new_df_liu)
+
+df=NULL
+
+for (i in z){
+  i$sqr<-i$Observed
+  i$dx = factor(i$dx)
+  x<-i[i$dx == 'nonIBD',]
+  med<-median(x$Observed)
+  i$dx<-factor(i$dx, levels = c( "CD", "nonIBD"))
+  w<-table(i$dx, factor(i$sqr < med , levels = c("TRUE", "FALSE")))
+  w<-as.data.frame(w)
+  df<-rbind(df, w)}
+  #print(df)}
+
+bloc_len <- 4
+
+df$bloc <-
+  rep(seq(1, 1 + nrow(df) %/% bloc_len), each = bloc_len, length.out = nrow(df))
+#df$Var2<-ifelse(df$Var2 =="TRUE" & df$Var1 == "CD", "n.e", "n.c")
+df<-df %>% 
+  spread(Var2, Freq) 
+
+x<-df %>% 
+  group_split(Var1) %>% 
+  lapply(as.data.frame)
+
+x<-cbind(x[[1]], x[[2]])
+
+x$Study<-c("Gevers et al.", "Lloyd-Price et al.",  "Morgan et al., 2012", "Liu et al.")
+
+x$n.e<- x[,3]+x[,4]
+
+x$n.c<- x[,7]+x[,8]
+
+x<-x[,c(-4, -8)]
+
+xx_CD_bio<-metabin(event.e=x$`TRUE`, n.e = x$n.e, x$TRUE.1, n.c = x$n.c, studlab = x$Study, sm="OR", comb.fixed=FALSE)
+xx_CD_bio
+ forest(xx_CD_bio, sortvar=TE, leftlabs = c("CD biopsy datasets", "Events", "Total", "Events", "Total"))
+
+
+
+```
+
+
+```{r}
+#stool
+z<- list(forb_UH,  jac_UH,  jan_UH, stool_xcm_UC, new_risk_stool_UH, yam_UH)
+df=NULL
+
+for (i in z){
+  i$sqr<-i$Observed
+  i$dx = factor(i$dx)
+  x<-i[i$dx == 'nonIBD',]
+  med<-median(x$Observed)
+  i$dx<-factor(i$dx, levels = c( "UC", "nonIBD"))
+  w<-table(i$dx, factor(i$sqr < med , levels = c("TRUE", "FALSE")))
+  w<-as.data.frame(w)
+  df<-rbind(df, w)}
+  #print(df)}
+
+bloc_len <- 4
+
+df$bloc <-
+  rep(seq(1, 1 + nrow(df) %/% bloc_len), each = bloc_len, length.out = nrow(df))
+#df$Var2<-ifelse(df$Var2 =="TRUE" & df$Var1 == "CD", "n.e", "n.c")
+df<-df %>% 
+  spread(Var2, Freq) 
+
+x<-df %>% 
+  group_split(Var1) %>% 
+  lapply(as.data.frame)
+
+x<-cbind(x[[1]], x[[2]])
+
+x$Study<-c("Forbes et al.",   "Jacobs et al.", "Halfvarson et al.", "Morgan et al.,2012", "Gevers et al.", "Yamada et al.")
+x$n.e<- x[,3]+x[,4]
+
+x$n.c<- x[,7]+x[,8]
+
+x<-x[,c(-4, -8)]
+
+xx_UC_stool<-metabin(event.e=x$`TRUE`, n.e = x$n.e, x$TRUE.1, n.c = x$n.c, studlab = x$Study, sm="OR", comb.fixed=FALSE)
+xx_UC_stool
+ forest(xx_UC_stool, sortvar=TE, leftlabs = c("UC stool datasets", "Events", "Total", "Events", "Total"))
+
+```
+
+```{r}
+
+z<- list(forb_CH,  stool_xcm_CD, new_kim_stool, new_risk_stool_CD, yam_CH, br_new)
+
+df=NULL
+
+for (i in z){
+  i$sqr<-i$Observed
+  i$dx = factor(i$dx)
+  x<-i[i$dx == 'nonIBD',]
+  med<-median(x$Observed)
+  i$dx<-factor(i$dx, levels = c( "CD", "nonIBD"))
+  w<-table(i$dx, factor(i$sqr < med , levels = c("TRUE", "FALSE")))
+  w<-as.data.frame(w)
+  df<-rbind(df, w)}
+  #print(df)}
+
+bloc_len <- 4
+
+df$bloc <-
+  rep(seq(1, 1 + nrow(df) %/% bloc_len), each = bloc_len, length.out = nrow(df))
+#df$Var2<-ifelse(df$Var2 =="TRUE" & df$Var1 == "CD", "n.e", "n.c")
+df<-df %>% 
+  spread(Var2, Freq) 
+
+x<-df %>% 
+  group_split(Var1) %>% 
+  lapply(as.data.frame)
+
+x<-cbind(x[[1]], x[[2]])
+x$Study<-c("Forbes et al.",   "Morgan et al., 2012", "Kim et al.", "Gevers et al.", "Yamada et al.", "Braun et al.")
+x$n.e<- x[,3]+x[,4]
+
+x$n.c<- x[,7]+x[,8]
+
+x<-x[,c(-4, -8)]
+
+xx_CD_stool<-metabin(event.e=x$`TRUE`, n.e = x$n.e, x$TRUE.1, n.c = x$n.c, studlab = x$Study, sm="OR", comb.fixed=FALSE)
+xx_CD_stool
+ forest(xx_CD_stool, sortvar=TE, leftlabs = c("CD stool datasets", "Events", "Total", "Events", "Total"))
+
+```
+Cohen's d-Crohns disease
+```{r}
+new_riskCD$Study<- "Gevers et al"
+new_riskUH$Study<- "Gevers et al"
+risk_both<-rbind(new_riskCD, new_riskUH)
+risk_both$Sample_type <- "biopsy"
+colnames(risk_both)[2]<-"dx"
+risk_both<-risk_both[,c(1:3,5,4)]
+
+forb_CH$Study<-"Forbes et al"
+forb_UH$Study<-"Forbes et al"
+forb_both<-rbind(forb_CH, forb_UH)
+forb_both$Sample_type <- "stool"
+forb_both<-forb_both[,c(1:3,7,6)]
+
+hmp_CH$Study<-"Lloyd-Price et al"
+hmp_UH$Study<-"Lloyd-Price et al"
+hmp_both<-rbind(hmp_CH, hmp_UH)
+hmp_both$Sample_type<- "biopsy"
+hmp_both<-hmp_both[,c(1:3,7,6)]
+
+colnames(jan_CH)[4]<-"Sample_type"
+jan_CH$Study<-"Halfvarson et al"
+colnames(jan_UH)[4]<-"Sample_type"
+jan_UH$Study<-"Halfvarson et al"
+jan_both<-rbind(jan_CH, jan_UH)
+jan_both$Sample_type<-gsub("UBERON:feces", "stool", jan_both$Sample_type)
+jan_both<-jan_both[,c(1:4,7)]
+
+
+colnames(jac_CH)[4]<-"Sample_type"
+jac_CH$Study<-"Jacobs et al"
+colnames(jac_UH)[4]<-"Sample_type"
+jac_UH$Study<-"Jacobs et al"
+jac_both<-rbind(jac_CH, jac_UH)
+jac_both$Sample_type<-gsub("Feces", "stool", jac_both$Sample_type)
+
+colnames(new_kim)[4]<-"Sample_type"
+new_kim$Study<-"Kim et al"
+new_kim$Sample_type<-gsub("^.+stool.", "stool", new_kim$Sample_type)
+new_kim$Sample_type<-gsub("^.+tissue.", "biopsy", new_kim$Sample_type)
+kim_both<-new_kim
+
+new_risk_stool_CD$Study<- "Gevers et al, stool"
+new_risk_stool_UH$Study<- "Gevers et al, stool"
+risk_stool_both<-rbind(new_risk_stool_CD, new_risk_stool_UH)
+risk_stool_both$Sample_type <- "stool"
+colnames(risk_stool_both)[2]<-"dx"
+
+
+###########SELECT FOR COLUMNS NEEDED FOR THIS CALCULATION
+new_df_mott<-alpha_mott_met[,c("Observed", "dx", "Subject")]
+new_df_mott<-new_df_mott %>% 
+  filter(dx %in% c("CD", "nonIBD"))
+new_df_mott$Sample_type<-"lavage"
+new_df_mott$Study<-"Mottawea et al."
+new_df_liu<-alpha_liu_met[,c("Observed", "dx", "Subject", "Isolation_source")]
+new_df_liu$Study<-"Liu et al."
+colnames(new_df_liu)[4]<-"Sample_type"
+
+new_df_br<-alpha_br_met[,c("Observed", "dx", "Subject", "host_body_product")]
+new_df_br$Study<-"Braun et al."
+colnames(new_df_br)[4]<-"Sample_type"
+new_df_yam$Sample_type<-"stool"
+new_df_yam<-new_df_yam[,c(1:3,6,5)]
+#BIND ALL DATAFRAMES FROM EACH STUDY TOGETHER
+all_sam<-rbind(risk_both, kim_both, forb_both, xcm_both, hmp_both, jac_both, jan_both,  risk_stool_both, new_df_liu, new_df_br, new_df_mott, new_df_yam)
+
+##SPLIT DATAFRAME INTO DIFFERENT STUDY GROUPS BUT HAVE THEM GROUPED INTO "sample_type"
+  
+sample_type<-split(all_sam, all_sam$Study)
+
+#CREATE AN EMPTY DATAFRAME FOR FUNCTION 
+df<-NULL
+
+#disease-alpha diveristy 
+###USE FUNCTION TO CALCULATE COHENS D
+hi<-lapply(sample_type, function(i){
+    x<-i %>% 
+    filter(i$dx %in% c("nonIBD", "CD"))
+  y<-x[,1]
+  z<-cohen.d(y, x$dx)
+ a<- rbind(df, c(colnames(sample_type)[i], z$estimate, z$magnitude, z$conf.int))
+})
+
+##CHANGE DATAFRAME STRUCTURE FOR "TAXA LOST" CALCULATION
+hi<-do.call(rbind.data.frame, hi)
+hi$Study<-rownames(hi)
+hi<-as.data.frame(hi)
+
+df<-NULL
+
+#CALCULATE AVERAGE TAXA LOST  BY USING THE FUNCTION TO CALCULATE THE MEDIAN OBSERVED RICHNESS IN CONTROLS AND CD
+hi2<-lapply(sample_type, function(i){
+    x<-i %>% 
+    filter(i$dx =="nonIBD")
+  y<-median(x$Observed)
+   x2<-i %>% 
+    filter(i$dx =="CD")
+  y2<-median(x2$Observed)
+  b<- rbind(df, c(colnames(sample_type)[i],y,y2 ))
+})
+
+#USE MEDIANS TO CALCULATE ESTIMATED TAXA LOST 
+hi2<-do.call(rbind.data.frame, hi2)
+colnames(hi2)[1:2]<-c("nonIBD", "CD")
+hi2$dif<-((((hi2$CD-hi2$nonIBD)/hi2$nonIBD)*100)*-1) #CONVERT TO PERCENTAGE 
+hi<-cbind(hi, hi2)
+hi4<-hi[,3:5] #get ci to plot later 
+hi5<-hi[,c(1,5,8)] #melt to make two variables for two barplots 
+hi3<-melt(hi5)
+hi6<-melt(hi4)
+all<-cbind(hi3, hi6)
+all<-all[,2:6]
+colnames(all)[5]<-"Val"
+colnames(all)[4]<-"CI"
+hi_CD<-hi
+```
+
+Plot for Cohen's d
+```{r}
+
+CD_dis<-ggplot(hi, aes(x=Study))+
+   geom_pointrange(aes(y=V1, ymin = lower, ymax=upper),size=0.8,color='slateblue3',fatten = 4)+
+  geom_point(aes(x=Study,y=dif/50), inherit.aes = FALSE,color='dark orange', size=3.0)+
+   scale_y_continuous(limits=c(-3,2),
+
+    # Features of the first axis
+    name = "Effect size",
+
+    # Add a second axis and specify its features
+    sec.axis = sec_axis( trans=~.*50, name="Percentage of taxa lost")
+  ) +
+
+#
+  theme_classic()+
+  theme( axis.title.y.left = element_text(size=15, color='slateblue3'),axis.title.y.right = element_text(color='dark orange', size=15), 
+         axis.text.x = element_text(angle = 90, vjust= 0.5, hjust=1, size=15,), axis.text.y.right  =  element_text(size=15, color='dark orange'), axis.text.y  =  element_text(size=15, color='slateblue3'), axis.title.x = element_text(size=15))+
+
+  geom_hline(yintercept=c(0.8, 0.5,0.2, -0.8, -0.2, -0.5), linetype="dashed", color = "slateblue3", size=0.4)+
+  
+  geom_hline(yintercept=0, color = "black", size=1)+
+
+  
+  geom_text(label = "small effect", y=  -0.14, x= 2.1,size = 4)+
+  geom_text(label = "small effect", y=  0.26, x= 2.1,size = 4)+
+  geom_text(label = "medium effect", y=  -0.36, x= 2.25,size = 4)+
+  geom_text(label = "Large effect", y= - 0.66, x= 2.15,size = 4)+
+  geom_text(label = "medium effect", y=  0.56, x= 2.25,size = 4)+  xlab("CD datasets") 
+CD_dis
+```
+
+
+Cohen's d-Ulcerative Colitis 
+```{r}
+xcmp_UH$Study<-"Morgan et al 2015"
+xcmp_UH$Sample_type<-"biopsy"
+xcmp_both<-xcmp_UH
+
+xcmp_both<-xcmp_both[,c(1:3,5,4)]
+
+
+#SELECT FOR COLUMNS NEEDED
+new_df_mott<-alpha_mott_met[,c("Observed", "dx", "Subject")]
+new_df_mott<-new_df_mott %>% 
+  filter(dx %in% c("UC", "nonIBD"))
+new_df_mott$Study<-"Mottawea et al."
+new_df_mott$Sample_type<-"lavage"
+all_sam<-rbind(risk_both, forb_both, xcm_both, hmp_both, jac_both, jan_both, risk_stool_both, xcmp_both, new_df_mott, new_df_yam)
+
+
+  
+sample_type<-split(all_sam, all_sam$Study)
+
+df<-NULL
+
+#disease-alpha diveristy. calculate cohen's d using this function 
+hi<-lapply(sample_type, function(i){
+    x<-i %>% 
+    filter(i$dx %in% c("nonIBD", "UC"))
+    x$dx<-factor(x$dx, levels=c("UC", "nonIBD"))
+  y<-x[,1]
+  z<-cohen.d(y, x$dx)
+ a<- rbind(df, c(colnames(sample_type)[i], z$estimate, z$magnitude, z$conf.int))
+})
+
+hi<-do.call(rbind.data.frame, hi)
+
+hi$Study<-rownames(hi)
+hi<-as.data.frame(hi)
+
+df<-NULL
+
+#calculate avergae number of taxa lost using this function
+hi2<-lapply(sample_type, function(i){
+    x<-i %>% 
+    filter(i$dx =="nonIBD")
+  y<-median(x$Observed)
+   x2<-i %>% 
+    filter(i$dx =="UC")
+  y2<-median(x2$Observed)
+  b<- rbind(df, c(colnames(sample_type)[i],y,y2 ))
+})
+
+hi2<-do.call(rbind.data.frame, hi2)
+colnames(hi2)[1:2]<-c( "nonIBD", "UC")
+hi2$dif<-((((hi2$UC-hi2$nonIBD)/hi2$nonIBD)*100)*-1)
+hi<-cbind(hi, hi2)
+hi4<-hi[,3:5] #get ci to plot later 
+hi5<-hi[,c(1,5,8)] #melt to make two variabls for two barplots 
+hi3<-melt(hi5)
+hi6<-melt(hi4)
+all<-cbind(hi3, hi6)
+all<-all[,2:6]
+colnames(all)[5]<-"Val"
+colnames(all)[4]<-"CI"
+
+hi_UC<-hi
+
+```
+
+```{r}
+
+UC_dis<-ggplot(hi, aes(x=Study))+
+   geom_pointrange(aes(y=V1, ymin = lower, ymax=upper),size=0.8,color='slateblue3',fatten = 4)+
+  geom_point(aes(x=Study,y=dif/50), inherit.aes = FALSE,color='dark orange', size=3.0)+
+   scale_y_continuous(limits=c(-3,2),
+
+    # Features of the first axis
+    name = "Effect size",
+
+    # Add a second axis and specify its features
+    sec.axis = sec_axis( trans=~.*50, name="Percentage of taxa lost")
+  ) +
+
+ # theme_ipsum()+
+#
+  theme_classic()+
+  theme( axis.title.y.left = element_text(size=15, color='slateblue3'),axis.title.y.right = element_text(color='dark orange', size=15),
+         axis.text.x = element_text(angle = 90, vjust= 0.5, hjust=1, size=15), axis.text.y.right  =  element_text(size=15, color='dark orange'), axis.text.y  =  element_text(size=15, color='slateblue3'), axis.title.x = element_text(size = 15))+
+
+  geom_hline(yintercept=c(0.8, 0.5, 0.2, -0.8, -0.2, -0.5), linetype="dashed", color = "slateblue3", size=0.4)+
+  # geom_errorbar(aes(ymin=lower, ymax=upper), width=.2,
+  #                position=position_dodge(.9))+
+  geom_hline(yintercept=0, color = "black", size=1)+
+
+  
+  geom_text(label = "small effect", y=  -0.16, x= 1.5,size = 4)+
+  geom_text(label = "small effect", y=  0.26, x= 1.5,size = 4)+
+  geom_text(label = "medium effect", y=  -0.46, x= 1.5,size = 4)+
+  geom_text(label = "Large effect", y=  -0.76, x= 1.5,size = 4)+ 
+  geom_text(label = "medium effect", y=  0.56, x= 1.5,size = 4)+
+  geom_text(label = "Large effect", y=  0.90, x= 1.5,size = 4)+xlab("UC datasets") 
+UC_dis
+```
+
+

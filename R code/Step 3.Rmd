@@ -1,0 +1,436 @@
+
+
+
+Next we calculate adonis and anosim for each dataset and factors. 
+
+
+ANOSIM-Mottawea
+```{r}
+mott<-subset_samples(rare_mott, dx %in% c("CD", "UC","nonIBD"))
+ mott<-mott%>%
+tax_glom(taxrank = "Genus")
+mott_d = get_variable(mott, "dx")
+
+mott_ano = anosim(phyloseq::distance(mott, "bray"),mott_d)
+mott_ano
+# ANOSIM statistic R: 0.002019 
+#       Significance: 0.417 
+
+```
+Adonis
+```{r}
+mott_ad= as(sample_data(mott), "data.frame")
+dmott = phyloseq::distance(mott, "bray")
+adon_mott= adonis2(dmott ~ dx, mott_ad)
+adon_mott
+
+
+#           Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)
+# dx         2     0.992 0.49578  1.1035 0.03099  0.261
+# Residuals 69    31.000 0.44928         0.96901       
+# Total     71    31.992                 1.00000                   
+```
+
+ANOSIM-yamada
+```{r}
+yam<-subset_samples(rare_yam, dx %in% c("CD", "UC","nonIBD"))
+yam<-yam %>%
+tax_glom(taxrank = "Genus")
+yam_d = get_variable(yam, "dx")
+
+yam_ano = anosim(phyloseq::distance(yam, "bray"), yam_d)
+yam_ano
+# ANOSIM statistic R: 0.1322 
+#       Significance: 0.001 
+
+```
+Adonis
+```{r}
+yam_ad= as(sample_data(yam), "data.frame")
+dyam = phyloseq::distance(yam, "bray")
+adon_yam= adonis2(dyam ~ dx, yam_ad)
+adon_yam
+          
+```
+
+
+ANOSIM-xcm
+```{r}
+xcm<-subset_samples(rare_xcm, dx %in% c("CD", "UC","nonIBD"))
+xcm<- xcm%>%
+tax_glom(taxrank = "Genus")
+xcm_d = get_variable(xcm, "dx")
+
+xcm_ano = anosim(phyloseq::distance(xcm, "bray"), xcm_d)
+xcm_ano
+# ANOSIM statistic R: 0.02341 
+#       Significance: 0.136 
+
+```
+Adonis
+```{r}
+xcm_ad= as(sample_data(xcm), "data.frame")
+# xcm<-subset_samples(xcm, active %in% c("1", "0"))
+dxcm = phyloseq::distance(xcm, "bray")
+
+adon_xcm= adonis2(dxcm ~ stool+dx, xcm_ad)
+adon_xcm
+
+#              Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)
+# dx            2     0.885 0.44265 1.18474 0.01184  0.111
+# antibiotics   1     0.273 0.27319 0.73118 0.00365  0.894
+# Residuals   197    73.605 0.37363         0.98450       
+# Total       200    74.764                 1.00000   
+```
+ANOSIM-liu
+```{r}
+liu<-subset_samples(rare_liu, dx %in% c("CD", "nonIBD"))
+liu<-liu %>%
+tax_glom(taxrank = "Genus")
+liu_d = get_variable(liu, "dx")
+
+liu_ano = anosim(phyloseq::distance(rare_liu, "bray"), liu_d)
+liu_ano
+# ANOSIM statistic R: 0.08248 
+#       Significance: 0.008 
+```
+Adonis-liu
+```{r}
+liu_ad= as(sample_data(liu), "data.frame")
+dliu = phyloseq::distance(liu, "bray")
+adon_liu= adonis2(dliu ~ dx, liu_ad)
+adon_liu
+#           Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)  
+# dx         1    0.5451 0.54506  2.0811 0.02535  0.013 *
+# Residuals 80   20.9528 0.26191         0.97465         
+# Total     81   21.4979                 1.00000         
+```
+
+ANOSIM-braun
+```{r}
+
+r_br = subset_samples(rare_br, !is.na(dx) | Sample_Number ==1)
+br<-subset_samples(r_br, dx %in% c("CD", "nonIBD"))
+br<-br %>%
+tax_glom(taxrank = "Genus")
+br_d = get_variable(br, "dx")
+
+br_ano = anosim(phyloseq::distance(br, "bray"), br_d)
+br_ano
+# ANOSIM statistic R: 0.04291 
+#       Significance: 0.217 
+```
+Adonis-braun
+```{r}
+br_ad= as(sample_data(br), "data.frame")
+dbr = phyloseq::distance(br, "bray")
+adon_br= adonis2(dbr ~ dx, br_ad)
+adon_br
+#           Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)   
+# dx         1    0.6854 0.68545  1.9562 0.02358  0.003 **
+# Residuals 81   28.3818 0.35039         0.97642          
+# Total     82   29.0673                 1.00000                         
+```
+
+
+ANOSIM-risk
+```{r}
+risk<-rare_risk %>% 
+tax_glom(taxrank = "Genus")
+
+risk_d = get_variable(risk, "dx")
+
+risk_d = get_variable(risk, "Antibiotics")
+
+
+
+```
+Adonis
+```{r}
+
+risk_group = get_variable(risk, "dx")
+risk_ad= as(sample_data(risk) , "data.frame")
+
+drisk = phyloseq::distance(risk, "bray")
+adon_risk= adonis2(drisk ~dx, risk_ad)
+adon_risk
+
+
+
+risk_1<-subset_samples(risk,!is.na(Antibiotics))
+risk_group = get_variable(risk_1, "Antibiotics")
+risk_ad= as(sample_data(risk_1), "data.frame")
+drisk = phyloseq::distance(risk_1, "bray")
+
+betadff<- betadisper(drisk, risk_group, type = c("median", "centroid"), bias.adjust = FALSE, sqrt.dist = FALSE, add = FALSE)
+permutest(betadff) #no difference in dispersion 
+plot(betadff)
+
+adon_risk= adonis2(drisk ~Antibiotics, risk_ad)
+adon_risk
+
+adon_risk= adonis2(drisk ~ diseasesubtype,risk_ad)
+adon_risk
+
+adon_risk= adonis2(drisk ~dx+Antibiotics, risk_ad) #for some reason it wont work if you put diagnosis last 
+adon_risk
+
+
+
+```
+
+Anosim-jan
+```{r}
+
+rare_jan<-subset_samples(rare_jan, Subject %in% jan_new$Subject)
+
+
+
+jan<-rare_jan %>%
+tax_glom(taxrank = "Genus")
+#jan<-subset_samples(jan, dx %in% c("CD", "nonIBD"))
+jan_d = get_variable(jan, "y.ibd_subtype")
+
+jan_ano = anosim(phyloseq::distance(jan, "bray"), jan_d)
+jan_ano
+# ANOSIM statistic R: 0.1206 
+#       Significance: 0.001 
+```
+
+Adonis
+```{r}
+#jan<-subset_samples(jan, dx %in% c("CD", "nonIBD"))
+jan_ad= as(sample_data(jan), "data.frame")
+djan = phyloseq::distance(jan, "bray")
+adon_jan= adonis2(djan ~ dx+y.ibd_subtype, jan_ad)
+adon_jan
+```
+
+Anosim-hmp
+```{r}
+new_df_hmp<-alpha_hmp_met[,c("Observed", "dx", "Subject", "host_subject_ID", "Isolation_source")]
+
+hmp_UH<-new_df_hmp%>%
+  group_by(host_subject_ID) %>% 
+  filter(dx %in%c("UC", "nonIBD")) %>% 
+  filter(Isolation_source== "Rectum") %>% 
+  filter(row_number()==1) %>% 
+  mutate(Study="Lloyd-Price et al.")
+hmp_CH<-new_df_hmp%>%
+  group_by(host_subject_ID) %>% 
+  filter(dx %in% c("CD","nonIBD")) %>%       #Pseudo-replication prevention
+  filter(Isolation_source == "Ileum") %>% 
+  filter(row_number()==1) %>% 
+  mutate(Study="Lloyd-Price et al.")
+
+
+x<-rbind(hmp_UH, hmp_CH)
+rare_hmp<-subset_samples(rare_hmp, Subject %in% x$Subject)
+
+
+
+
+hmp1<-rare_hmp %>% 
+tax_glom(taxrank = "Genus") 
+hmp_d = get_variable(hmp1, "dx")
+
+hmp_ano = anosim(phyloseq::distance(hmp1, "bray"), hmp_d)
+hmp_ano
+```
+
+Adonis
+```{r}
+#hmp1<-subset_samples(hmp1, dx %in% c("CD", "UC", "nonIBD"))
+hmp_ad= as(sample_data(hmp1), "data.frame")
+dhmp = phyloseq::distance(hmp1, "bray")
+adon_hmp= adonis2(dhmp ~ dx+Isolation_source, hmp_ad) # come back to it and do inflammmation and  area 
+adon_hmp
+
+
+```
+
+Anosim-forbes
+```{r}
+x<-rbind(forb_CH, forb_UH)
+rare_forbes<-subset_samples(rare_forbes, Subject %in% x$Subject)
+
+
+
+
+forbes = subset_samples(rare_forbes, !dx %in% c("RA", "MS", "NA"))
+forbes<- subset_samples(forbes, !is.na(dx))
+
+
+forbes1<-forbes %>% 
+tax_glom(taxrank = "Genus")
+forb_d = get_variable(forbes1, "dx")
+
+forb_ano = anosim(phyloseq::distance(forbes1, "bray"), forb_d)
+forb_ano
+
+# ANOSIM statistic R: 0.1261 
+#       Significance: 0.001 
+```
+
+Adonis
+```{r}
+#forbes<-subset_samples(forbes1, dx %in% c("CD", "nonIBD"))
+forb_ad= as(sample_data(forbes1), "data.frame")
+dforb = phyloseq::distance(forbes1, "bray")
+adon_forb= adonis2(dforb ~ dx, forb_ad)
+adon_forb
+
+```
+
+Anosim-risk_stool
+```{r}
+risk_stool = subset_samples(rare_risk_stool,!diagnosis %in% c("", "IC"))
+risk_stool<-risk_stool %>% 
+tax_glom(taxrank = "Genus")
+
+rs_d = get_variable(risk_stool, "diagnosis")
+
+rs_ano = anosim(phyloseq::distance(risk_stool, "bray"), rs_d)
+rs_ano
+
+# ANOSIM statistic R: 0.2056 
+#       Significance: 0.001 
+```
+
+
+Adonis
+```{r}
+risk_stool<-subset_samples(risk_stool, diagnosis %in% c("CD", "nonIBD"))
+rs_ad= as(sample_data(risk_stool), "data.frame")
+drs = phyloseq::distance(risk_stool, "bray")
+adon_rs= adonis2(drs ~ diagnosis+diseasesubtype.x, rs_ad) #pseudo_replication
+adon_rs
+     
+```
+
+Anosim-xcmp
+```{r}
+xcmp= subset_samples(rare_xcmp,  Subject != "SRR1908909")
+xcmp<-xcmp%>% 
+tax_glom(taxrank = "Genus")
+xcmp_d = get_variable(xcmp, "dx")
+
+xcmp_ano = anosim(phyloseq::distance(xcmp, "bray"), xcmp_d)
+xcmp_ano
+
+```
+Adonis
+```{r}
+
+xcmp_ad= as(sample_data(xcmp), "data.frame")
+dxcmp = phyloseq::distance(xcmp, "bray")
+adon_xcmp= adonis2(dxcmp ~ dx, xcmp_ad)
+adon_xcmp
+adon_xcmp= adonis2(dxcmp ~ Antibiotics, xcmp_ad) #do this once you have put inflammation in right categories 
+adon_xcmp      
+adon_xcmp= adonis2(dxcmp ~dx+Antibiotics, xcmp_ad)
+adon_xcmp
+xcmp_group = get_variable(xcmp, "Antibiotics")
+
+
+betadxcmp<- betadisper(dxcmp, xcmp_group, type = c("median", "centroid"), bias.adjust = FALSE, sqrt.dist = FALSE, add = FALSE)
+permutest(betadxcmp)
+plot(betadxcmp) #there is greater dispersion in one group
+```
+
+Anosim-kim
+```{r}
+kim<-rare_kim %>% 
+tax_glom(taxrank = "Genus")
+
+kim_d = get_variable(kim, "dx")
+
+kim_ano = anosim(phyloseq::distance(kim, "bray"), kim_d)
+kim_ano
+
+kim_d = get_variable(kim, "Sample_type")
+
+kim_ano = anosim(phyloseq::distance(kim, "bray"), kim_d)
+kim_ano
+
+```
+Adonis
+```{r}
+kim_ad= as(sample_data(kim), "data.frame")
+dkim = phyloseq::distance(kim, "bray")
+adon_kim= adonis2(dkim ~ dx, kim_ad)
+adon_kim
+adon_kim= adonis2(dkim ~ Sample_type, kim_ad) # stool (HC and CD samples) and biopsy (CD)
+adon_kim      
+adon_kim= adonis2(dkim~ Sample_type+dx, kim_ad) # comparison of dx before feature as dx has 2 variables that can then be compared to the variation of feature. where as with feature, biopsy  samples do not have any other dx to be comapred to (only cd). can be seen total effect as 12% when only feature but both adds up to 12%/. 
+adon_kim   
+
+
+
+
+
+```
+
+
+Adonis
+```{r}
+jac<-subset_samples(rare_jac, dx %in% c("CD", "nonIBD"))
+kim_ad= as(sample_data(jac), "data.frame")
+dkim = phyloseq::distance(jac, "bray")
+adon_jac= adonis2(dkim ~ dx, kim_ad)
+adon_jac
+       
+```
+
+
+Anosim-Schirmer
+```{r}
+
+x<-new_df_pro%>%  ##control for pseudo-replication
+  group_by(sampleType) %>% 
+  group_by(SubjectID) %>% 
+  arrange(collectionWeek) %>%
+  filter(row_number()==n()) %>% 
+  ungroup 
+rare_p<-subset_samples(rare_pro,SubjectID %in% x$SubjectID )#pseudo
+rare_p<-rare_p %>% 
+  tax_glom(taxrank = "Genus")
+
+
+
+
+
+pro_ad= as(sample_data(rare_p), "data.frame")
+dpro = phyloseq::distance(rare_p, "bray")
+adon_pro= adonis2(dpro ~ sampleType, pro_ad)
+adon_pro
+
+```
+
+
+
+Adonis-Schirmer
+```{r}
+
+jac<-subset_samples(rare_p, antibiotics %in% c("Yes", "No"))
+kim_ad= as(sample_data(jac), "data.frame")
+dkim = phyloseq::distance(jac, "bray")
+adon_pro= adonis2(dkim ~ sampleType+antibiotics, kim_ad)
+adon_pro
+
+pro_group = get_variable(rare_p, "sampleType")
+
+
+betadpro<- betadisper(dkim, pro_group, type = c("median", "centroid"), bias.adjust = FALSE, sqrt.dist = FALSE, add = FALSE)
+permutest(betadpro)
+plot(betadpro)
+
+
+pro_group = get_variable(rare_p, "antibiotics")
+
+
+betadpro<- betadisper(dkim, pro_group, type = c("median", "centroid"), bias.adjust = FALSE, sqrt.dist = FALSE, add = FALSE)
+permutest(betadpro)
+plot(betadpro)
+       
+```
