@@ -765,42 +765,6 @@ sigtab_xcmp_UC = sigtab_UC[order(sigtab_UC$padj), ]
 
 ```
 
-XCM-pouch 
-```{r}
-resCTS_sig <- sigtab_xcmp_UC[order(-sigtab_xcmp_UC$log2FoldChange),]
-
-int <- row.names(resCTS_sig)[1:7]
-ASVlabs <- tax_table(xcmp)[int, 6]
-names(ASVlabs) <- int
-ASVlabs <- as.list(ASVlabs)
-
-ASV_labeller <- function(variable,value){
-return(ASVlabs[value])
-}
-
-tcounts <- t(log2((counts(diagdds[int, ], normalized=TRUE, replaced=FALSE)+.5))) %>%
-merge(colData(diagdds), ., by="row.names") %>%
-gather(ASV, log2FC, (ncol(.)-length(int)+1):ncol(.))
-
-tcounts %>% 
-select(Row.names, dx, ASV, log2FC) %>% 
-head %>% 
-knitr::kable()
-
-ggplot(tcounts, aes(dx, log2FC)) + 
-geom_boxplot() + 
-facet_wrap(~ASV, scales = "free_y", labeller = ASV_labeller) +
-labs(x = "Subject", 
-y = "log2FC", 
-title = "Highest log2FoldChange Results") +
-geom_jitter(aes(color= Subject))+
-theme(axis.text.x = element_text(angle = -90))+theme(legend.position = "none")
-
-
-xcm_15_UC<-c("Faecalitalea", "Epulopiscium", "Barnesiella", "Faecalibacterium", "Hungatella", "Staphylococcus", "Rothia", "Acinetobacter", "Enterrococcus", "Megasphaera", "Parvimonas", "Sphingomonas", "Subdoligranulum", "CAG-56", "Parasutterella", "Clostridioides", 	"Lactobacillus", 	"GCA-900066755", "Lachnospiraceae_NK4A136_group", "Dialister", "Prevotella_7", "Prevotella_2",  "Syntrophococcus", "Ruminococcaceae_UCG-014", "Coprococcus_1", 	"Ruminococcaceae_UCG-003", 	"Dielma", "Tyzzerella_4", "Ruminococcus_1", 	"Acidovorax", 	"Ruminococcaceae_UCG-002", 	"Fusobacterium", "Lelliottia", "Pseudomonas")
-xcm_15_UC<-as.data.frame(xcm_15_UC)
-
-```
 Deseq2-Kim
 ```{r}
 # Assign DNA sequences to refseq slot and replace with simple names to improve readability
