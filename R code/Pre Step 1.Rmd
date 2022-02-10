@@ -38,25 +38,18 @@ library(patchwork)
 ```
 
 ```{r}
-setwd("/Users/lama_/Dropbox/Lama/5th_year/Data/")
+setwd("~/meta_analysis_IBD/Data/")
 ```
-Yamada
+Yamada et al
 ```{r}
-sequ_yam<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Yamada/seqtab_final.rds")
-taxa_yam<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Yamada/tax_final.rds")
-meta_yam<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Yamada/yamada_meta.csv")
-```
+sequ_yam<-readRDS("~/meta_analysis_IBD/Data/Yamada/seqtab_final.rds")
+taxa_yam<-readRDS("~/meta_analysis_IBD/Data/Yamada/tax_final.rds")
+meta_yam<-read.csv("~/meta_analysis_IBD/Data/Yamada/yamada_meta.csv")
 
-
-```{r}
 samples.out<-rownames(sequ_yam)
 subject<-samples.out
 sampledf_yam<-data.frame(Subject=subject)
-```
 
-Rarefy
-```{r}
-#Making all dataframes have the same codes for each tested group
 colnames(meta_yam)[1]<- "Subject"
 meta_yam$dx<-ifelse(grepl('^[HIK]', meta_yam$host_subject_id), "nonIBD", 
                     ifelse(grepl('^U',  meta_yam$host_subject_id),"UC", 
@@ -64,21 +57,12 @@ meta_yam$dx<-ifelse(grepl('^[HIK]', meta_yam$host_subject_id), "nonIBD",
 samdf_yam<-merge(sampledf_yam, meta_yam, by = "Subject")
 rownames(samdf_yam) <- samples.out 
 
-```
 
-Making it into a phyloseq object 
-
-```{r}
 ps_yam<- phyloseq(otu_table(sequ_yam, taxa_are_rows = FALSE),
                   sample_data(samdf_yam),
                   tax_table(taxa_yam))
 
-#make it relative abundance
-#ps.tx.jac<-transform_sample_counts(ps_jac, function(OTU) OTU/sum(OTU))
-```
 
-Rarefy 
-```{r}
 rarex = rarefy_even_depth(rngseed =1, ps_yam, 2000)
 
 rare_yam<- prune_taxa(taxa_sums(rarex)>1, rarex)
@@ -90,22 +74,16 @@ table(sample_data(ps_yam)$dx)
 table(sample_data(rare_yam)$dx)
 ```
 
-mott
+Mottawea et al
 ```{r}
-sequ_mott<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Mottawea/seqtab_final.rds")
-taxa_mott<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Mottawea/tax_final.rds")
-meta_mott<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Mottawea/meta_mott.csv")
-```
+sequ_mott<-readRDS("~/meta_analysis_IBD/Data/Mottawea/seqtab_final.rds")
+taxa_mott<-readRDS("~/meta_analysis_IBD/Data/Mottawea/tax_final.rds")
+meta_mott<-read.csv("~/meta_analysis_IBD/Data/Mottawea/meta_mott.csv")
 
-
-```{r}
 samples.out<-rownames(sequ_mott)
 subject<-samples.out
 sampledf_mott<-data.frame(Subject=subject)
-```
 
-Rarefy
-```{r}
 meta_mott$dx<-ifelse(meta_mott$disease =="Control", "nonIBD",
                      ifelse(meta_mott$disease=="CD", "CD", "UC"))
 
@@ -113,19 +91,12 @@ colnames(meta_mott)[1]<-"Subject"
 samdf_mott<-merge(sampledf_mott, meta_mott, by = "Subject")
 rownames(samdf_mott) <- samples.out 
 
-```
 
-Making it into a phyloseq object 
-
-```{r}
 ps_mott<- phyloseq(otu_table(sequ_mott, taxa_are_rows = FALSE),
                   sample_data(samdf_mott),
                   tax_table(taxa_mott))
 
-```
 
-Rarefy 
-```{r}
 
 rarex = rarefy_even_depth(rngseed =1, ps_mott, 2000)
 
@@ -138,41 +109,27 @@ table(sample_data(ps_mott)$dx)
 table(sample_data(rare_mott)$dx)
 ```
 
-Liu
+Liu et al
 ```{r}
-sequ_liu<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Liu/seqtab_final.rds")
-taxa_liu<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Liu/tax_final.rds")
-meta_liu<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Liu/meta_liu.csv")
-```
+sequ_liu<-readRDS("~/meta_analysis_IBD/Data/Liu/seqtab_final.rds")
+taxa_liu<-readRDS("~/meta_analysis_IBD/Data/Liu/tax_final.rds")
+meta_liu<-read.csv("~/meta_analysis_IBD/Data/Liu/meta_liu.csv")
 
-
-```{r}
 samples.out<-rownames(sequ_liu)
 subject<-samples.out
 sampledf_liu<-data.frame(Subject=subject)
-```
 
-Rarefy
-```{r}
 colnames(meta_liu)[1]<- "Subject"
 colnames(meta_liu)[40]<-"Subject2"
 meta_liu$dx<-ifelse(meta_liu$Diagnosis=="Not IBD", "nonIBD", "CD")
 samdf_liu<-merge(meta_liu, sampledf_liu, by = "Subject")
 rownames(samdf_liu) <- samples.out 
 
-```
-
-Making it into a phyloseq object 
-
-```{r}
 ps_liu<- phyloseq(otu_table(sequ_liu, taxa_are_rows = FALSE),
                   sample_data(samdf_liu),
                   tax_table(taxa_liu))
 
-```
 
-Rarefy 
-```{r}
 
 rarex = rarefy_even_depth(rngseed =1, ps_liu, 2000)
 
@@ -185,40 +142,27 @@ table(sample_data(ps_liu)$dx)
 table(sample_data(rare_liu)$dx)
 ```
 
-Braun
+Braun et al
 ```{r}
-sequ_br<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Braun/seqtab_final.rds")
-taxa_br<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Braun/tax_final.rds")
-meta_br<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Braun/meta_br.csv")
-```
+sequ_br<-readRDS("~/meta_analysis_IBD/Data/Braun/seqtab_final.rds")
+taxa_br<-readRDS("~/meta_analysis_IBD/Data/Braun/tax_final.rds")
+meta_br<-read.csv("~/meta_analysis_IBD/Data/Braun/meta_br.csv")
 
-
-```{r}
 samples.out<-rownames(sequ_br)
 subject<-samples.out
 sampledf_braun<-data.frame(Subject=subject)
-```
 
-Rarefy
-```{r}
 colnames(meta_br)[1]<- "Subject"
 meta_br$dx<-ifelse(meta_br$gastrointest_disord=="none", "nonIBD", "CD")
 
 samdf_br<-merge(meta_br, sampledf_braun, by="Subject")
 rownames(samdf_br) <- samples.out 
-```
 
-Making it into a phyloseq object 
-
-```{r}
 ps_br<- phyloseq(otu_table(sequ_br, taxa_are_rows = FALSE),
                   sample_data(samdf_br),
                   tax_table(taxa_br))
 
-```
 
-Rarefy 
-```{r}
 
 rarex = rarefy_even_depth(rngseed =1, ps_br, 2000)
 
@@ -234,15 +178,15 @@ table(sample_data(rare_br)$dx)
 
 
 
-PROTECT
+Schirmer et al
 ```{r}
-sequ_pro<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Schirmer/seqtab_final.rds")
-taxa_pro<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Schirmer/tax_final.rds")
-list_pro<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Schirmer/protect.csv")
-meta_pro<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Schirmer/mmc7.csv")
-```
-merging meta and list 
-```{r}
+sequ_pro<-readRDS("~/meta_analysis_IBD/Data/Schirmer/seqtab_final.rds")
+taxa_pro<-readRDS("~/meta_analysis_IBD/Data/Schirmer/tax_final.rds")
+list_pro<-read.csv("~/meta_analysis_IBD/Data/Schirmer/protect.csv")
+meta_pro<-read.csv("~/meta_analysis_IBD/Data/Schirmer/mmc7.csv")
+
+##merging meta and list 
+
 colnames(meta_pro)[1]<-"Sample.Name"
 meta_pro<-meta_pro[,1:24] #take out the columns of value
 meta_pro$Sample.Name<-as.factor(as.character(meta_pro$Sample.Name))
@@ -256,38 +200,21 @@ list_pro<-list_pro %>%
 samdf_pro<-merge(list_pro,meta_pro, by = "Sample.Name")
 samdf_pro$Inflamed<-ifelse(samdf_pro$PUCAI_C4_WKall=="inactive", "0","1") #controls are inactive UC. Change identifiable code to match other dtataframes for comparison 
 samdf_pro$dis<-ifelse(samdf_pro$Inflamed=="0", "nonIBD", "UC")
-```
 
-```{r}
 samples.out<-rownames(sequ_pro)
 subject<-samples.out
 sampledf_pro<-data.frame(Subject=subject)
-```
 
-
-
-Rarefy
-```{r}
 colnames(samdf_pro)[2]<- "Subject"
 
 samdf_pro<-merge(sampledf_pro, samdf_pro, by = "Subject")
 rownames(samdf_pro) <- samples.out 
 
-```
 
-Making it into a phyloseq object 
-
-```{r}
 ps_pro<- phyloseq(otu_table(sequ_pro, taxa_are_rows = FALSE),
                   sample_data(samdf_pro),
                   tax_table(taxa_pro))
 
-#make it relative abundance
-#ps.tx.jac<-transform_sample_counts(ps_jac, function(OTU) OTU/sum(OTU))
-```
-
- Rarefy 
-```{r}
 rarex = rarefy_even_depth(rngseed =1, ps_pro, 2000)
 
 rare_pro<- prune_taxa(taxa_sums(rarex)>1, rarex)
@@ -298,21 +225,17 @@ ntaxa(ps_pro)
 ```
 
 
-XCM
+Morgan et al 2012
 ```{r}
-sequ_xcm<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Morgan_2012/seqtab_final.rds")
-taxa_xcm<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Morgan_2012/tax_final2.rds")
-meta_xcm<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Morgan_2012/osccar_prism_metadata.csv")
-list_xcm<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Morgan_2012/sra_run.csv")
-```
+sequ_xcm<-readRDS("~/meta_analysis_IBD/Data/Morgan_2012/seqtab_final.rds")
+taxa_xcm<-readRDS("~/meta_analysis_IBD/Data/Morgan_2012/tax_final2.rds")
+meta_xcm<-read.csv("~/meta_analysis_IBD/Data/Morgan_2012/osccar_prism_metadata.csv")
+list_xcm<-read.csv("~/meta_analysis_IBD/Data/Morgan_2012/sra_run.csv")
 
-```{r}
 samples.out<-rownames(sequ_xcm)
 subject<-samples.out
 sampledf_xcm<-data.frame(Subject=subject)
-```
-metadata clean up
-```{r}
+
 #clean up structure of metadata (2 files to fit together) to fit with sequencing data 
 table<-as.data.frame(t(meta_xcm))
 colnames(table)<-meta_xcm[,1]
@@ -332,18 +255,11 @@ x<-samdf_xcm$Subject
 
 rownames(samdf_xcm) <- x
 
-```
-
-Making it into a phyloseq object 
-
-```{r}
 ps_xcm<- phyloseq(otu_table(sequ_xcm, taxa_are_rows = FALSE),
                   sample_data(samdf_xcm),
                   tax_table(taxa_xcm))
 
-```
- Rarefy 
-```{r}
+
 
 rarex = rarefy_even_depth(rngseed =1, ps_xcm, 2000)
 
@@ -354,31 +270,28 @@ nsamples(ps_xcm)
 ntaxa(ps_xcm)
 ```
 
-
-
+Gevers et al
 ```{r}
-sequ_risk<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Gevers/seqtab_final.rds")
-taxa_risk<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Gevers/tax_final.rds")
-meta_risk<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Gevers/SraRunTable.csv")
-map_risk<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Gevers/risk_mapping_file.csv")
 
-map_risk2<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Gevers/mapping_risk_2.csv")
-meta_bio<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Gevers/meta_bio.csv")
+sequ_risk<-readRDS("~/meta_analysis_IBD/Data/Gevers/seqtab_final.rds")
+taxa_risk<-readRDS("~/meta_analysis_IBD/Data/Gevers/tax_final.rds")
+meta_risk<-read.csv("~/meta_analysis_IBD/Data/Gevers/SraRunTable.csv")
+map_risk<-read.csv("~/meta_analysis_IBD/Data/Gevers/risk_mapping_file.csv")
+
+map_risk2<-read.csv("~/meta_analysis_IBD/Data/Gevers/mapping_risk_2.csv")
+meta_bio<-read.csv("~/meta_analysis_IBD/Data/Gevers/meta_bio.csv")
 
 
-sequ_risk_stool<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Gevers/seqtab_final_stool.rds")
-taxa_risk_stool<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Gevers/tax_final_stool.rds")
-map_stool<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Gevers/risk_stool_meta.csv")
-```
+sequ_risk_stool<-readRDS("~/meta_analysis_IBD/Data/Gevers/seqtab_final_stool.rds")
+taxa_risk_stool<-readRDS("~/meta_analysis_IBD/Data/Gevers/tax_final_stool.rds")
+map_stool<-read.csv("~/meta_analysis_IBD/Data/Gevers/risk_stool_meta.csv")
 
-```{r}
 samples.out<-rownames(sequ_risk)
 subject<-samples.out
 sampledf<-data.frame(Subject =subject)
-```
 
-Filtering to only have samples we picked for this project
-```{r}
+###Filtering to only have samples we picked for this project
+
 map_risk$external_id<-gsub("[.]","", map_risk$external_id ) # remove . or wildcard to share same code with other file
 map_risk2$external_id<-gsub("[.]","", map_risk2$external_id ) # remove . or wildcard to share same code with other file
 meta_risk$Sample.Name<-gsub("-","", meta_risk$Sample.Name )
@@ -436,28 +349,28 @@ meta_filtered$lat_lon<-gsub("Not IBD","nonIBD", meta_filtered$lat_lon)
 meta_filtered$lat_lon<-gsub("Control","nonIBD", meta_filtered$lat_lon)
  meta_filtered$lat_lon<-gsub("Ulcerative Colitis", "UC", meta_filtered$lat_lon)
  meta_filtered$lat_lon<-gsub("IBD-U", "UC", meta_filtered$lat_lon)
-```
 
 
+##Merging metadata and sequence table
 
-Merging metadata and sequence table
-```{r}
 samdf_risk<-merge(x=sampledf, y= meta_filtered, by = "Subject")
 colnames(samdf_risk)[65]<-"dx"
 rownames(samdf_risk) <- samples.out 
 
-```
+##Making it into a phyloseq object 
 
-Making it into a phyloseq object 
-```{r}
 ps_risk<- phyloseq(otu_table(sequ_risk, taxa_are_rows = FALSE),
                    sample_data(samdf_risk),
                    tax_table(taxa_risk))
 
-
+rare = rarefy_even_depth(rngseed =1, ps_risk, 2000)
+rare_risk<- prune_taxa(taxa_sums(rare)>1, rare)
+nsamples(rare_risk)
+nsamples(ps_risk)
+ntaxa(ps_risk)
 ```
 
-Risk stool
+Gevers et al  stool
 ```{r}
 #repeat the same process for Gevers biopsy dataset to teh stool dataset 
 
@@ -486,24 +399,12 @@ colnames(samdf_risk_stool)[33]<-"diagnosis"
 
 samdf_risk_stool$diagnosis<-gsub("no","nonIBD", samdf_risk_stool$diagnosis)
 
-```
-Phyloseq object
-```{r}
+
 ps_risk_stool<- phyloseq(otu_table(sequ_risk_stool, taxa_are_rows = FALSE),
                   sample_data(samdf_risk_stool),
                   tax_table(taxa_risk_stool))
-```
 
-biopsy-rarefy
-```{r}
-rare = rarefy_even_depth(rngseed =1, ps_risk, 2000)
-rare_risk<- prune_taxa(taxa_sums(rare)>1, rare)
-nsamples(rare_risk)
-nsamples(ps_risk)
-ntaxa(ps_risk)
-```
-Stool-rarefy
-```{r}
+
 rare = rarefy_even_depth(rngseed =1, ps_risk_stool, 2000)
 rare_risk_stool<- prune_taxa(taxa_sums(rare)>1, rare)
 nsamples(rare_risk_stool)
@@ -512,23 +413,21 @@ ntaxa(ps_risk_stool)
 ```
 
 
-HMP study
+Lloyd-Price et al study
 ```{r}
 
-sequ_hmp<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Lloyd_Price/seqtab_final.rds")
-taxa_hmp<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Lloyd_Price/tax_final.rds")
-meta_hmp<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Lloyd_Price/SraRunTable.txt")
-meta_hmp2<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Lloyd_Price/hmp2_metadata.csv")
-```
+sequ_hmp<-readRDS("~/meta_analysis_IBD/Data/Lloyd_Price/seqtab_final.rds")
+taxa_hmp<-readRDS("~/meta_analysis_IBD/Data/Lloyd_Price/tax_final.rds")
+meta_hmp<-read.csv("~/meta_analysis_IBD/Data/Lloyd_Price/SraRunTable.txt")
+meta_hmp2<-read.csv("~/meta_analysis_IBD/Data/Lloyd_Price/hmp2_metadata.csv")
 
-```{r}
 samples.out<-rownames(sequ_hmp)
 subject<-samples.out
 sampledf_hmp<-data.frame(Subject =subject)
-```
 
-Merging metadata and sequence table
-```{r}
+
+##Merging metadata and sequence table
+
 colnames(meta_hmp)[1]<- "Subject"
 
 names(meta_hmp)[37]<- "dx"
@@ -548,49 +447,31 @@ samdf_hmp<-merge(x=sampledf_hmp, y= meta_hmp_both, by = "Subject")
 
 
 rownames(samdf_hmp) <- samples.out 
-```
-Making it into a phyloseq object 
 
-```{r}
 ps_hmp<- phyloseq(otu_table(sequ_hmp, taxa_are_rows = FALSE),
                   sample_data(samdf_hmp),
                   tax_table(taxa_hmp))
 
 
-```
-
-
-```{r}
 rareh = rarefy_even_depth(rngseed =1, ps_hmp, 2000)
 rare_hmp<- prune_taxa(taxa_sums(rareh)>1, rareh)
 nsamples(rare_hmp)
 ntaxa(rare_hmp)
 nsamples(ps_hmp)
 ntaxa(ps_hmp)
-
-
-```
-
-```{r}
-dna <- Biostrings::DNAStringSet(taxa_names(rare_hmp))
-names(dna) <- taxa_names(rare_hmp)
-rare_hmp<- merge_phyloseq(rare_hmp, dna)
-taxa_names(rare_hmp) <- paste0("ASV", seq(ntaxa(rare_hmp)))
 ```
 
 Jansson
 ```{r}
 
-sequ_jan<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Halfvarson/seqtab_final.rds")
-taxa_jan<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Halfvarson/tax_final.rds")
-meta_jan<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Halfvarson/Jansson_2017.csv")
-list<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Halfvarson/ebi_experiment_jan2017.csv")
+sequ_jan<-readRDS("~/meta_analysis_IBD/Data/Halfvarson/seqtab_final.rds")
+taxa_jan<-readRDS("~/meta_analysis_IBD/Data/Halfvarson/tax_final.rds")
+meta_jan<-read.csv("~/meta_analysis_IBD/Data/Halfvarson/Jansson_2017.csv")
+list<-read.csv("~/meta_analysis_IBD/Data/Halfvarson/ebi_experiment_jan2017.csv")
 
 
-```
 
-Changing files for a successful merging 
-```{r}
+###Changing files for a successful merging 
 
 list_jan<-list[order(list$sample_name),]#make sure sample names are in the same order in both files 
 meta_jan<-meta_jan[order(meta_jan$X.SampleID),] 
@@ -600,45 +481,27 @@ metadata_jan<-cbind(x=list_jan, y=meta_jan, by = "experiment")
 metadata_jan$y.Subject<-NULL
 colnames(metadata_jan)[1]<-"experiment"
 colnames(metadata_jan)[2]<-"Subject"
-```
 
-Change names of variables
-```{r}
+##Change names of variables
+
 names(metadata_jan)[28]<- "dx"
 metadata_jan$dx<-gsub("HC", "nonIBD", metadata_jan$dx)
 
-```
-
-
-```{r}
 samples.out<-rownames(sequ_jan)
 subject<-samples.out
 sampledf_jan<-data.frame(Subject=subject)
-```
 
-Rarefy
-```{r}
 samdf_jan<-merge(sampledf_jan, metadata_jan, by = "Subject")
 samdf_jan$y.collection_timestamp <- as.Date(samdf_jan$y.collection_timestamp, "%m/%d/%Y") # Need this structure for when controlling for pseudo-replication 
 
 
 rownames(samdf_jan) <- samples.out 
 
-
-```
-
-Making it into a phyloseq object 
-
-```{r}
 ps_jan<- phyloseq(otu_table(sequ_jan, taxa_are_rows = FALSE),
                   sample_data(samdf_jan),
                   tax_table(taxa_jan))
 
-```
 
-
-
-```{r}
 rarej = rarefy_even_depth(rngseed =1, ps_jan, 2000)
 rare_jan<- prune_taxa(taxa_sums(rarej)>1, rarej)
 nsamples(rare_jan)
@@ -649,43 +512,28 @@ ntaxa(ps_jan)
 ```
 
 
-Jacobs
+Jacobs et al 
 ```{r}
-sequ_jac<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Jacobs/seqtab_final.rds")
-taxa_jac<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Jacobs/tax_final.rds")
-meta_jac<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Jacobs/Jacob_meta.csv")
-```
+sequ_jac<-readRDS("~/meta_analysis_IBD/Data/Jacobs/seqtab_final.rds")
+taxa_jac<-readRDS("~/meta_analysis_IBD/Data/Jacobs/tax_final.rds")
+meta_jac<-read.csv("~/meta_analysis_IBD/Data/Jacobs/Jacob_meta.csv")
 
-```{r}
 samples.out<-rownames(sequ_jac)
 subject<-samples.out
 sampledf_jac<-data.frame(Subject=subject)
-```
 
-Rarefy
-```{r}
 colnames(meta_jac)[1]<- "Subject"
 meta_jac$gastrointest_disord<-gsub("Normal","nonIBD", meta_jac$gastrointest_disord)
 names(meta_jac)[19]<- "dx"
 samdf_jac<-merge(sampledf_jac, meta_jac, by = "Subject")
 rownames(samdf_jac) <- samples.out 
 
-```
 
-Making it into a phyloseq object 
-
-```{r}
 ps_jac<- phyloseq(otu_table(sequ_jac, taxa_are_rows = FALSE),
                   sample_data(samdf_jac),
                   tax_table(taxa_jac))
 
-#make it relative abundance
-#ps.tx.jac<-transform_sample_counts(ps_jac, function(OTU) OTU/sum(OTU))
-```
 
-
-
-```{r}
 rarej = rarefy_even_depth(rngseed =1, ps_jac, 2000)
 rare_jac<- prune_taxa(taxa_sums(rarej)>1, rarej)
 nsamples(rare_jac)
@@ -695,23 +543,17 @@ ntaxa(ps_jac)
 ```
 
 
-Forbes
+Forbes et al
 ```{r}
-sequ_forbes<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Forbes/seqtab_final.rds")
-taxa_forbes<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Forbes/tax_final.rds")
-meta_forbes<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Forbes/forbes_data.csv")
+sequ_forbes<-readRDS("~/meta_analysis_IBD/Data/Forbes/seqtab_final.rds")
+taxa_forbes<-readRDS("~/meta_analysis_IBD/Data/Forbes/tax_final.rds")
+meta_forbes<-read.csv("~/meta_analysis_IBD/Data/Forbes/forbes_data.csv")
 
 
-```
-
-```{r}
 samples.out<-rownames(sequ_forbes)
 subject<-samples.out
 sampledf_forbes<-data.frame(Subject=subject)
-```
 
-Rarefy
-```{r}
 colnames(meta_forbes)[1]<- "Subject"
 colnames(meta_forbes)[21]<- "dx"
 meta_forbes$dx<-gsub("HC","nonIBD", meta_forbes$dx)
@@ -722,23 +564,12 @@ meta_forbes$dx<-gsub("Ulcerative colitis","UC", meta_forbes$dx)
 samdf_forbes<-merge(sampledf_forbes, meta_forbes, by = "Subject")
 rownames(samdf_forbes) <- samples.out 
 
-```
 
-
-Making it into a phyloseq object 
-
-```{r}
 ps_forbes<- phyloseq(otu_table(sequ_forbes, taxa_are_rows = FALSE),
                      sample_data(samdf_forbes),
                      tax_table(taxa_forbes))
 
-#make it relative abundance
-ps.tx.forbes<-transform_sample_counts(ps_forbes, function(OTU) OTU/sum(OTU))
-```
 
-
-
-```{r}
 rarefor = rarefy_even_depth(rngseed =1, ps_forbes, 2000)
 rare_forbes<- prune_taxa(taxa_sums(rarefor)>1, rarefor)
 nsamples(rare_forbes)
@@ -747,24 +578,20 @@ nsamples(ps_forbes)
 ntaxa(ps_forbes)
 ```
 
-POUCH-XCMP
+Morgan et al 2015
 ```{r}
-sequ_xcmp<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Morgan_2015/seqtab_final.rds")
-taxa_xcmp<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Morgan_2015/tax_final.rds")
-meta_xcmp<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Morgan_2015/xcm_pouch_meta.csv")
-pouch_meta<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Morgan_2015/pouch_meta.csv")
-```
+sequ_xcmp<-readRDS("~/meta_analysis_IBD/Data/Morgan_2015/seqtab_final.rds")
+taxa_xcmp<-readRDS("~/meta_analysis_IBD/Data/Morgan_2015/tax_final.rds")
+meta_xcmp<-read.csv("~/meta_analysis_IBD/Data/Morgan_2015/xcm_pouch_meta.csv")
+pouch_meta<-read.csv("~/meta_analysis_IBD/Data/Morgan_2015/pouch_meta.csv")
 
-```{r}
 samples.out<-rownames(sequ_xcmp)
 subject<-samples.out
 sampledf_xcmp<-data.frame(Subject=subject)
 sampledf_xcmp<-gsub("_1*", "", sampledf_xcmp$Subject) #change pattern in file to merge with others later
 sampledf_xcmp<-as.data.frame(sampledf_xcmp)
 colnames(sampledf_xcmp)[1]<-"Subject"
-```
 
-```{r}
 #Change disease codes with those of other datasets for easy comparisons
 meta_xcmp$dx <-ifelse(meta_xcmp$Outcome== "CDL", 'CDL',
                       ifelse(meta_xcmp$Outcome== "NP", 'UC', 
@@ -782,18 +609,11 @@ samdf_xcmp<-merge(sampledf_xcmp, meta_pouch1, by = "Subject")
 
 
 rownames(samdf_xcmp) <- samples.out
-```
 
-```{r}
 ps_xcmp<- phyloseq(otu_table(sequ_xcmp, taxa_are_rows = FALSE),
                    sample_data(samdf_xcmp),
                    tax_table(taxa_xcmp))
 
-```
-
-
-
-```{r}
 rarexcmp = rarefy_even_depth(rngseed =1, ps_xcmp, 2000)
 rare_xcmp<- prune_taxa(taxa_sums(rarexcmp)>1, rarexcmp)
 rare_xcmp<-subset_samples(rare_xcmp, Outcome != "CDL")
@@ -803,22 +623,17 @@ nsamples(ps_xcmp)
 ntaxa(ps_xcmp)
 ```
 
-KIM
+Kim et al 
 ```{r}
 
-sequ_kim<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Kim/seqtab_final.rds")
-taxa_kim<-readRDS("/Users/lama_/Dropbox/Lama/5th_year/Data/Kim/tax_final.rds")
-meta_kim<-read.csv("/Users/lama_/Dropbox/Lama/5th_year/Data/Kim/meta_kim.csv")
-```
+sequ_kim<-readRDS("~/meta_analysis_IBD/Data/Kim/seqtab_final.rds")
+taxa_kim<-readRDS("~/meta_analysis_IBD/Data/Kim/tax_final.rds")
+meta_kim<-read.csv("~/meta_analysis_IBD/Data/Kim/meta_kim.csv")
 
-```{r}
 samples.out<-rownames(sequ_kim)
 subject<-samples.out
 sampledf_kim<-data.frame(Subject=subject)
-```
 
-Rarefy
-```{r}
 colnames(meta_kim)[1]<- "Subject"
 
 meta_kim$dx <-ifelse(meta_kim$feature== "Crohn's disease(stool)", 'CD',
@@ -833,21 +648,11 @@ meta_kim$Sample_type<-as.factor(as.character(meta_kim$Sample_type))
 samdf_kim<-merge(sampledf_kim, meta_kim, by = "Subject")
 rownames(samdf_kim) <- samples.out 
 
-```
-
-Making it into a phyloseq object 
-
-```{r}
 ps_kim<- phyloseq(otu_table(sequ_kim, taxa_are_rows = FALSE),
                   sample_data(samdf_kim),
                   tax_table(taxa_kim))
 
-#make it relative abundance
-#ps.tx.jac<-transform_sample_counts(ps_jac, function(OTU) OTU/sum(OTU))
-```
 
-
-```{r}
 rarej = rarefy_even_depth(rngseed =1, ps_kim, 2000)
 rare_kim<- prune_taxa(taxa_sums(rarej)>1, rarej)
 nsamples(rare_kim)
