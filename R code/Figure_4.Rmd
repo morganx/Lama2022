@@ -1,0 +1,145 @@
+---
+title: "table_mangler"
+author: "XCM"
+date: "18/02/2022"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+
+foo<-read.csv("~/meta_analysis_IBD/Supplementary tables/Supplementary table 1.csv")
+foo$direction <-ifelse(foo$log2FoldChange > 0, "Up", "Down")
+cd_up<-foo %>% dplyr::filter(padj < 0.1)  %>% dplyr::filter(log2FoldChange > 0) %>% dplyr::count(Genus)
+cd_down<-foo %>% dplyr::filter(padj < 0.1)  %>%dplyr:: filter(log2FoldChange < 0) %>% dplyr::count(Genus)
+cd_up$Direction = "Up"
+cd_down$Direction = "Down"
+
+bar<-rbind(cd_up, cd_down)
+bar2<-bar %>% dplyr::group_by(Genus) %>% dplyr::mutate(total = sum(n)) %>%  dplyr::filter(total> 1)
+
+cdplot<-ggplot(bar2, aes(x = reorder(Genus, total), y = n)) + geom_bar(stat = "identity", aes(fill=Direction)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip() + xlab("Genus") + ylab("Total studies") + scale_fill_brewer(palette = "Dark2") + ggtitle("CD Study Agreement")
+
+
+uc<-read.csv("~/meta_analysis_IBD/Supplementary tables/Supplementary table 2.csv")
+uc$direction <-ifelse(uc$log2FoldChange > 0, "Up", "Down")
+
+uc_up<-uc %>%dplyr:: filter(padj < 0.2)  %>% dplyr::filter(log2FoldChange > 0) %>% dplyr::count(Genus)
+uc_down<- uc %>% dplyr::filter(padj < 0.2)  %>% dplyr::filter(log2FoldChange < 0) %>% dplyr::count(Genus)
+uc_up$Direction = "Up"
+uc_down$Direction = "Down"
+bar3<-rbind(uc_up, uc_down)
+bar4<-bar3 %>% dplyr::group_by(Genus) %>% dplyr::mutate(total = sum(n)) %>% dplyr::filter(total> 1)
+ucplot<-ggplot(bar4, aes(x = reorder(Genus, total), y = n)) + geom_bar(stat = "identity", aes(fill=Direction)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip() + xlab("Genus") + ylab("Total studies") + scale_fill_brewer(palette = "Dark2") + ggtitle("UC Study Agreement")
+
+fin<-ggarrange(cdplot, ucplot, labels=c("A", "B"))
+
+library(ggvenn)
+ list_venn <- list(CD = bar2$Genus, UC=bar4$Genus)
+  test<-ggvenn(list_venn)
+  test_all<-test + scale_fill_brewer(palette = "Dark2") + ggtitle("IBD-associated genera - agreement between studies")+ theme(plot.title = element_text(size=13, face = "bold"))
+  
+test_all
+  
+  #last<-ggarrange(fin, test, nrow=2, labels=c("A", "C"))
+  #ggsave("C:/Users/lama_/Dropbox/Lama_resubmission/venn.pdf")
+
+  
+# sample type tally
+  
+cd_up<-foo %>% dplyr::filter(padj < 0.1)  %>% dplyr::filter(log2FoldChange > 0) %>% dplyr::group_by(feature) %>% dplyr::count(Genus)
+cd_down<-foo %>%dplyr:: filter(padj < 0.1)  %>% dplyr::filter(log2FoldChange < 0) %>% dplyr::count(Genus)
+  
+```
+
+##Stool
+```{r}
+
+cd_up<-foo %>%dplyr::filter(feature=="Stool") %>%  dplyr::filter(padj < 0.1)  %>% dplyr::filter(log2FoldChange > 0) %>%  dplyr::count(Genus) 
+cd_down<-foo %>% dplyr::filter(padj < 0.1)%>% dplyr::filter(feature=="Stool")   %>%dplyr:: filter(log2FoldChange < 0)%>% dplyr::count(Genus)
+cd_up$Direction = "Up"
+cd_down$Direction = "Down"
+
+bar<-rbind(cd_up, cd_down)
+bar2<-bar %>% dplyr::group_by(Genus) %>% dplyr::mutate(total = sum(n)) %>%  dplyr::filter(total> 1)
+
+cdplot<-ggplot(bar2, aes(x = reorder(Genus, total), y = n)) + geom_bar(stat = "identity", aes(fill=Direction)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip() + xlab("Genus") + ylab("Total studies") + scale_fill_brewer(palette = "Dark2") + ggtitle("CD Study Agreement")
+
+
+
+
+uc_up<-uc %>% dplyr::filter(feature=="Stool") %>% dplyr:: filter(padj < 0.2)  %>% dplyr::filter(log2FoldChange > 0) %>% dplyr::count(Genus)
+uc_down<- uc %>%dplyr::filter(feature=="Stool") %>% dplyr::filter(padj < 0.2)  %>% dplyr::filter(log2FoldChange < 0) %>% dplyr::count(Genus)
+uc_up$Direction = "Up"
+uc_down$Direction = "Down"
+bar3<-rbind(uc_up, uc_down)
+bar4<-bar3 %>% dplyr::group_by(Genus) %>% dplyr::mutate(total = sum(n)) %>% dplyr::filter(total> 1)
+ucplot<-ggplot(bar4, aes(x = reorder(Genus, total), y = n)) + geom_bar(stat = "identity", aes(fill=Direction)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip() + xlab("Genus") + ylab("Total studies") + scale_fill_brewer(palette = "Dark2") + ggtitle("UC Study Agreement")
+
+library(ggvenn)
+ list_venn <- list(CD = bar2$Genus, UC=bar4$Genus)
+  test<-ggvenn(list_venn)
+  test_stool<-test + scale_fill_brewer(palette = "Dark2") + ggtitle("IBD-associated genera - agreement between stool datasets")+ theme(plot.title = element_text(size=13, face = "bold"))
+  
+test_stool
+  
+
+
+  
+# sample type tally
+  
+cd_up<-foo %>% dplyr::filter(padj < 0.1)  %>% dplyr::filter(log2FoldChange > 0) %>% dplyr::group_by(feature) %>% dplyr::count(Genus)
+cd_down<-foo %>%dplyr:: filter(padj < 0.1)  %>% dplyr::filter(log2FoldChange < 0) %>% dplyr::count(Genus)
+  
+```
+##Biopsy
+```{r}
+
+
+
+
+cd_up<-foo %>%dplyr::filter(feature=="Biopsy") %>%  dplyr::filter(padj < 0.1)  %>% dplyr::filter(log2FoldChange > 0) %>%  dplyr::count(Genus) 
+cd_down<-foo %>% dplyr::filter(feature=="Biopsy") %>%  dplyr::filter(padj < 0.1)%>%   dplyr:: filter(log2FoldChange < 0)%>% dplyr::count(Genus)
+cd_up$Direction = "Up"
+cd_down$Direction = "Down"
+
+bar<-rbind(cd_up, cd_down)
+bar2<-bar %>% dplyr::group_by(Genus) %>% dplyr::mutate(total = sum(n)) %>%  dplyr::filter(total> 1)
+
+cdplot<-ggplot(bar2, aes(x = reorder(Genus, total), y = n)) + geom_bar(stat = "identity", aes(fill=Direction)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip() + xlab("Genus") + ylab("Total studies") + scale_fill_brewer(palette = "Dark2") + ggtitle("CD Study Agreement")
+
+
+
+uc_up<-uc %>% dplyr::filter(feature=="Biopsy") %>% dplyr:: filter(padj < 0.2)  %>% dplyr::filter(log2FoldChange > 0) %>% dplyr::count(Genus)
+uc_down<- uc %>%dplyr::filter(feature=="Biopsy") %>% dplyr::filter(padj < 0.2)  %>% dplyr::filter(log2FoldChange < 0) %>% dplyr::count(Genus)
+uc_up$Direction = "Up"
+uc_down$Direction = "Down"
+bar3<-rbind(uc_up, uc_down)
+bar4<-bar3 %>% dplyr::group_by(Genus) %>% dplyr::mutate(total = sum(n)) %>% dplyr::filter(total> 1)
+ucplot<-ggplot(bar4, aes(x = reorder(Genus, total), y = n)) + geom_bar(stat = "identity", aes(fill=Direction)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip() + xlab("Genus") + ylab("Total studies") + scale_fill_brewer(palette = "Dark2") + ggtitle("UC Study Agreement")
+
+
+
+library(ggvenn)
+ list_venn <- list(CD = bar2$Genus, UC=bar4$Genus)
+  test<-ggvenn(list_venn)
+  test_biopsy<-test + scale_fill_brewer(palette = "Dark2") + ggtitle("IBD-associated genera - agreement between biopsy datasets")+ theme(plot.title = element_text(size=13, face = "bold"))
+  
+test_biopsy
+
+  tests<-ggarrange(test_all,test_stool,test_biopsy, labels=c("C", "D", "E"), nrow = 1)
+  tests
+
+  last<-ggarrange(fin, tests, nrow=2, labels=c("A", "C"))
+  ggsave("C:/Users/lama_/Dropbox/Lama_resubmission/venn.pdf")
+  last
+
+  
+# sample type tally
+  
+cd_up<-foo %>% dplyr::filter(padj < 0.1)  %>% dplyr::filter(log2FoldChange > 0) %>% dplyr::group_by(feature) %>% dplyr::count(Genus)
+cd_down<-foo %>%dplyr:: filter(padj < 0.1)  %>% dplyr::filter(log2FoldChange < 0) %>% dplyr::count(Genus)
+  
+```
